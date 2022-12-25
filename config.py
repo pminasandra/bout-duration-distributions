@@ -25,3 +25,7 @@ formats = ['png', 'svg', 'pdf']
 if __name__=="__main__":
     import utilities
     utilities.sprint(f"config.py speaking. current projectroot is {PROJECTROOT}")
+
+
+# Miscellaneous
+SUPPRESS_INFORMATIVE_PRINT = False
