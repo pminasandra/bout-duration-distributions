@@ -58,8 +58,9 @@ def as_bouts(dataframe, species):
         current_state = state
 
         if current_state != previous_state:
-            bout_states.append(previous_state)
-            bout_durations.append(state_duration)
+            if previous_state != "UNKNOWN":
+                bout_states.append(previous_state)
+                bout_durations.append(state_duration)
             state_duration = 0.0
 
         previous_state = state
@@ -67,6 +68,7 @@ def as_bouts(dataframe, species):
 
     boutdf = pd.DataFrame([bout_durations, bout_states]).T
     boutdf.columns = ["duration", "state"]
+    boutdf = boutdf.infer_objects()
     return boutdf
 
 
@@ -114,7 +116,3 @@ def bouts_data_generator():
         datasource = generators[species]()
         for databundle in datasource:
                 yield databundle
-
-hdg = hyena_data_generator()
-for db in hdg:
-    print(db["id"], db["data"], "\n\n\n")

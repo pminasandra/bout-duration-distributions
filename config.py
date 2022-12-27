@@ -27,5 +27,12 @@ if __name__=="__main__":
     utilities.sprint(f"config.py speaking. current projectroot is {PROJECTROOT}")
 
 
+# Distribution fitting
+def all_distributions(fit):
+    return {'Exponential': fit.exponential,
+            'Lognormal': fit.lognormal,
+            'Power_Law': fit.power_law,
+            'Truncated_Power_Law': fit.truncated_power_law}
+
 # Miscellaneous
 SUPPRESS_INFORMATIVE_PRINT = False
