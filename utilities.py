@@ -18,10 +18,11 @@ def saveimg(obj, name):
         name (str): the name to be given to the file, *without* extensions.
     """
     dirs = [os.path.join(config.FIGURES, f) for f in config.formats]
-    os.makedirs(dirs, exist_ok=True)
+    for dir in dirs:
+        os.makedirs(dir, exist_ok=True)
 
     for f in config.formats:
-        obj.savefig(os.path.join(FIGURES, f, name+f".{f}"))
+        obj.savefig(os.path.join(config.FIGURES, f, name+f".{f}"))
 
 
 def sprint(*args, **kwargs):

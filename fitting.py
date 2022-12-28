@@ -12,6 +12,7 @@ for more details
 
 import os.path
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import powerlaw as pl
@@ -70,7 +71,7 @@ def fits_to_all_states(dataframe, *args, **kwargs):
         state_bouts = dataframe[dataframe["state"] == state]
         durations = state_bouts["duration"]
 
-        fit = pl.Fit(durations, *args, discrete=True, **kwargs)
+        fit = pl.Fit(durations, *args, discrete=config.discrete, xmin=config.xmin, **kwargs)
 
         fitted_distributions[state] = fit
 
@@ -116,9 +117,35 @@ def compare_candidate_distributions(fit, data):
 
     return pd.DataFrame(dAICs)
 
+def plot_data_and_fits(fits, state, fig, ax, plot_fits=False, **kwargs):
+    """
+    Plots cumulative complementary distribution function of data and fitted distributions
+    Args:
+        fits (dict of powerlaw.Fit): typically from fits_to_all_states().
+        state (str): behavioural state.
+        fig (plt.Figure): figure with ax (below).
+        ax (plt.Axes): axis on which to draw.
+        plot_fits (bool): whether to plot fitted distributions alongside data.
+        **kwargs: passed on to ax.plot(...) via powerlaw.Fit.plot_ccdf(...).
+    """
+
+    fit = fits[state]
+    fit.plot_ccdf(ax=ax, **kwargs)
+    candidate_dists = config.all_distributions(fit)
+
+    if not plot_fits:
+        return fig, ax
+
+    for candidate_name in candidate_dists:
+        candidate = candidate_dists[candidate_name]
+        candidate.plot_ccdf(ax = ax[num], color=config.colors[candidate_name], linestyle=config.fit_line_style, linewidth=0.5, label=candidate_name)
+
+    return fig, ax
+
 def test_for_powerlaws():
     """
     Compares candidate distributions and writes to DATA/<species>/<state>.csv
+    Also plots distributions.
     Args:
         None
     Returns:
@@ -127,26 +154,44 @@ def test_for_powerlaws():
 
     bdg = boutparsing.bouts_data_generator()
     tables = {}
+    plots = {}
+
     for databundle in bdg:
         print(databundle["id"])
         data = databundle["data"]
         species_ = databundle["species"]
         data["duration"] /= classifier_info.classifiers_info[species_].epoch
+
+        fits = fits_to_all_states(data, verbose=False)
+        states = states_summary(data)["states"]
+
         if species_ not in tables:
             tables[species_] = {}
-
-        fits = fits_to_all_states(data, xmin=2.0, verbose=False)
-        states = states_summary(data)["states"]
+        if species_ not in plots:
+            plots[species_] = {}
 
         for state in states:
             if state not in tables[species_]:
                 tables[species_][state] = pd.DataFrame(columns=["id", "Exponential", "Lognormal", "Power_Law", "Truncated_Power_Law"])
+            if state not in plots[species_]:
+                plots[species_][state] = plt.subplots()
+
             table = compare_candidate_distributions(fits[state], data["duration"])
             table["id"] = databundle["id"]
             tables[species_][state] = pd.concat([tables[species_][state], table])
 
+            fig, ax = plots[species_][state]
+            plots[species_][state] = plot_data_and_fits(fits, state, fig, ax, plot_fits=False, color="darkred", alpha=0.6)
+
+
     for species in tables:
         for state in tables[species]:
             tables[species][state].to_csv(os.path.join(config.DATA, "FitResults", species, state + ".csv"), index=False)
+
+    for species in plots:
+        for state in plots[species]:
+            fig, ax = plots[species][state]
+            print(fig, ax)
+            utilities.saveimg(fig, f"{species}-{state}")
 
 test_for_powerlaws()

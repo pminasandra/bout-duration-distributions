@@ -110,7 +110,6 @@ def meerkat_data_generator():
     for meerkat in glob.glob(os.path.join(meerkat_dir, "*/*.csv")):
         name = os.path.basename(meerkat)[:-len(".csv")]
         read = pd.read_csv(meerkat, header=0)
-        read.columns =["datetime", "state"]
         read["datetime"] = pd.to_datetime(read["datetime"])
         yield {
                "data": as_bouts(read, "meerkat"),

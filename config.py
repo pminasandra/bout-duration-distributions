@@ -34,5 +34,19 @@ def all_distributions(fit):
             'Power_Law': fit.power_law,
             'Truncated_Power_Law': fit.truncated_power_law}
 
+discrete = True
+xmin = 2.0
+
+
+# Distribution plotting
+colors = {
+    'Exponential': 'cyan',
+    'Lognormal': 'blue',
+    'Power_Law': 'red',
+    'Truncated_Power_Law': 'maroon'
+}
+fit_line_style = 'dotted'
+
+
 # Miscellaneous
 SUPPRESS_INFORMATIVE_PRINT = False
