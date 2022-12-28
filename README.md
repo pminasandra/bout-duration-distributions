@@ -44,8 +44,27 @@ Prepare the following tree of directories (a.k.a folders) on your computer.
 Note that the data files are big, and will take up some space.
 
 ```
-YOUR_FOLDER
+PROJECTROOT
 ├── code
 ├── Data
 └── Figures
 ```
+
+**Note**: PROJECTROOT can be changed to any name of your choice, but make sure you use the appropriate commands below.
+
+# Usage
+
+Download this software to your system using 
+`git clone https://github.com/pminasandra/bout-duration-distributions code`
+while in your PROJECTROOT directory.
+
+Enter the `code` directory, and run `gather-data.sh` to obtain all data used in this project.
+
+- Note 1: `gather-data.sh` is a bash script, and thus works only on linux or with git-bash maybe.
+If you prefer to use an alternative system, please run the appropriate command equivalents for those in `gather-data.sh`.
+- Note 2: So far, only meerkat data is available for download. 
+Soon, data for all species will be put up.
+
+Edit the file `config.py`, and change the variable "PROJECTROOT" to the path to your PROJECTROOT directory.
+After this, the code will run mostly automatically.
+
