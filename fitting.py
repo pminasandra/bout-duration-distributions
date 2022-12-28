@@ -17,6 +17,7 @@ import pandas as pd
 import powerlaw as pl
 
 import config
+import classifier_info
 import boutparsing
 import utilities
 
@@ -100,7 +101,7 @@ def compare_candidate_distributions(fit, data):
 
     candidates = config.all_distributions(fit)
     AICs = {}
-    dAICs
+    dAICs = {}
     min_AIC = np.inf
     for candidate_name in candidates:
         candidate = candidates[candidate_name]
@@ -115,15 +116,37 @@ def compare_candidate_distributions(fit, data):
 
     return pd.DataFrame(dAICs)
 
-hdg = boutparsing.hyena_data_generator()
-for databundle in hdg:
-    print(databundle["id"])
-    data = databundle["data"]
-    data["duration"] /= 3.0
+def test_for_powerlaws():
+    """
+    Compares candidate distributions and writes to DATA/<species>/<state>.csv
+    Args:
+        None
+    Returns:
+        None
+    """
 
-    fits = fits_to_all_states(data, xmin=1.0, verbose=False)
-    states = states_summary(data)["states"]
+    bdg = boutparsing.bouts_data_generator()
+    tables = {}
+    for databundle in bdg:
+        print(databundle["id"])
+        data = databundle["data"]
+        species_ = databundle["species"]
+        data["duration"] /= classifier_info.classifiers_info[species_].epoch
+        if species_ not in tables:
+            tables[species_] = {}
 
-    for state in states:
-        print("\t", state, "\n", compare_candidate_distributions(fits[state], data["duration"]), end="\n\n")
+        fits = fits_to_all_states(data, xmin=2.0, verbose=False)
+        states = states_summary(data)["states"]
 
+        for state in states:
+            if state not in tables[species_]:
+                tables[species_][state] = pd.DataFrame(columns=["id", "Exponential", "Lognormal", "Power_Law", "Truncated_Power_Law"])
+            table = compare_candidate_distributions(fits[state], data["duration"])
+            table["id"] = databundle["id"]
+            tables[species_][state] = pd.concat([tables[species_][state], table])
+
+    for species in tables:
+        for state in tables[species]:
+            tables[species][state].to_csv(os.path.join(config.DATA, "FitResults", species, state + ".csv"), index=False)
+
+test_for_powerlaws()

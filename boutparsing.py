@@ -96,7 +96,27 @@ def hyena_data_generator():
 
 #TODO:
 def meerkat_data_generator():
-    return
+    """
+    *GENERATOR* yields behavioural sequence data and metadata for meerkats, individual-by-individual.
+    Args:
+        None so far.
+    Yields:
+        dict, where
+            dict["data"]: pd.DataFrame
+            dict["id"]: str, identifying information for the individual
+            dict["species"]: str, species of the individual whose data is in dict["data"]
+    """
+
+    for meerkat in glob.glob(os.path.join(meerkat_dir, "*/*.csv")):
+        name = os.path.basename(meerkat)[:-len(".csv")]
+        read = pd.read_csv(meerkat, header=0)
+        read.columns =["datetime", "state"]
+        read["datetime"] = pd.to_datetime(read["datetime"])
+        yield {
+               "data": as_bouts(read, "meerkat"),
+               "id": name,
+               "species": "meerkat"
+              }
 #TODO:
 #def coati_data_generator()
 
@@ -112,7 +132,8 @@ def bouts_data_generator():
             dict["id"]: str, identifying information for the individual
             dict["species"]: str, species of the individual whose data is in dict["data"]
     """
-    for species in ["hyena"]:#FIXME config.species:
+    for species in config.species:
         datasource = generators[species]()
         for databundle in datasource:
                 yield databundle
+
