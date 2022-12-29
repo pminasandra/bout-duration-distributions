@@ -138,7 +138,7 @@ def plot_data_and_fits(fits, state, fig, ax, plot_fits=False, **kwargs):
 
     for candidate_name in candidate_dists:
         candidate = candidate_dists[candidate_name]
-        candidate.plot_ccdf(ax = ax[num], color=config.colors[candidate_name], linestyle=config.fit_line_style, linewidth=0.5, label=candidate_name)
+        candidate.plot_ccdf(ax = ax, color=config.colors[candidate_name], linestyle=config.fit_line_style, linewidth=0.5, label=candidate_name)
 
     return fig, ax
 
@@ -156,8 +156,9 @@ def test_for_powerlaws():
     tables = {}
     plots = {}
 
+    print("Initialised distribution fitting sequence.")
     for databundle in bdg:
-        print(databundle["id"])
+        print("Processing ", databundle["species"], databundle["id"] + ".")
         data = databundle["data"]
         species_ = databundle["species"]
         data["duration"] /= classifier_info.classifiers_info[species_].epoch
@@ -181,9 +182,10 @@ def test_for_powerlaws():
             tables[species_][state] = pd.concat([tables[species_][state], table])
 
             fig, ax = plots[species_][state]
-            plots[species_][state] = plot_data_and_fits(fits, state, fig, ax, plot_fits=False, color="darkred", alpha=0.6)
+            plots[species_][state] = plot_data_and_fits(fits, state, fig, ax, plot_fits=False, color="darkred", alpha=0.3)
 
 
+    print("Generating tables and plots.")
     for species in tables:
         for state in tables[species]:
             tables[species][state].to_csv(os.path.join(config.DATA, "FitResults", species, state + ".csv"), index=False)
@@ -191,7 +193,16 @@ def test_for_powerlaws():
     for species in plots:
         for state in plots[species]:
             fig, ax = plots[species][state]
-            print(fig, ax)
+            epoch = classifier_info.classifiers_info[species].epoch
+            if classifier_info.classifiers_info[species].epoch != 1.0:
+                ax.set_xlabel(f"Time ($\\times {epoch}$ seconds)")
+            else:
+                ax.set_xlabel("Time (seconds)")
+            ax.set_ylabel("CCDF")
+            ax.set_title(f"Species: {species.title()} | State: {state.title()}")
             utilities.saveimg(fig, f"{species}-{state}")
 
-test_for_powerlaws()
+    print("Distribution fitting completed.")
+
+if __name__ == "__main__":
+    test_for_powerlaws()

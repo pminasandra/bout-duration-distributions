@@ -22,7 +22,7 @@ def saveimg(obj, name):
         os.makedirs(dir, exist_ok=True)
 
     for f in config.formats:
-        obj.savefig(os.path.join(config.FIGURES, f, name+f".{f}"))
+        obj.savefig(os.path.join(config.FIGURES, f, name+f".{f}"), dpi=500.0, format=f)
 
 
 def sprint(*args, **kwargs):
