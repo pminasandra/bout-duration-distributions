@@ -4,7 +4,8 @@
 
 """
 This module provides the function compute_behavioural_inertia, which computes the complement of the hazard function
-based on a given dataset. 
+based on a given dataset and state. It also includes the wrapper function generate_behavioural_inertia_plots(),
+which does this analysis on all species, individuals, and behavioural states. 
 """
 
 import os.path
@@ -12,8 +13,10 @@ import os.path
 import matplotlib.pyplot as plt
 import numpy as np
 
+import boutparsing
 import config
 import classifier_info
+import fitting
 import utilities
 
 if not config.SUPPRESS_INFORMATIVE_PRINT:
@@ -31,8 +34,12 @@ def compute_behavioural_inertia(dataframe, species, state):
         np.array (two column): time and inertia values
    """
     xmin = config.xmin
+    epoch = classifier_info.classifiers_info[species].epoch
 
-    dataframe = dataframe[dataframe["duration"] >= config.xmin].copy()
+    dataframe = dataframe.copy()
+    dataframe["duration"] /= epoch
+
+    dataframe = dataframe[dataframe["duration"] >= config.xmin]
     dataframe = dataframe[dataframe["state"] == state]
 
     unique_values = dataframe["duration"].unique()
@@ -45,7 +52,7 @@ def compute_behavioural_inertia(dataframe, species, state):
     for t in unique_values:
         BI_main = dataframe[dataframe["duration"] > t]
         BI_denom = BI_main["duration"].count()
-        BI_sub = dataframe[dataframe["duration"] > (t + 3.0)] 
+        BI_sub = dataframe[dataframe["duration"] > (t + 1.0)] 
         BI_numer = BI_sub["duration"].count()
 
         ts.append(t)
@@ -54,14 +61,50 @@ def compute_behavioural_inertia(dataframe, species, state):
     table = np.array([ts, BIs]).T
     return table
 
-if __name__ == "__main__":
-    import boutparsing
-    mdg = boutparsing.hyena_data_generator()
+def generate_behavioural_inertia_plots():
 
-    for databundle in mdg:
-        survival_table = compute_behavioural_inertia(databundle["data"], databundle["species"], "WALK")
-        plt.step(survival_table[:,0], survival_table[:,1])
-        plt.xscale('log')
-        # plt.yscale('log')
-        plt.show()
-        break
+    print("Behavioural inertia plot generation initiated.")
+    bdg = boutparsing.bouts_data_generator()
+
+    plots = {}
+    for databundle in bdg:
+        species_ = databundle["species"]
+        id_ = databundle["id"]
+        data = databundle["data"]
+        print(f"Working on {id_}.")
+
+        if species_ not in plots:
+            plots[species_] = {}
+
+        states = fitting.states_summary(data)["states"]
+
+        for state in states:
+            if state not in plots[species_]:
+                plots[species_][state] = plt.subplots()
+
+            survival_table = compute_behavioural_inertia(data, species_, state)
+            fig, ax = plots[species_][state]
+            ax.step(survival_table[:,0], survival_table[:,1], color=config.survival_plot_color, linewidth=0.75, alpha=0.4)
+
+    print("Data analysis completed, saving plots.")
+    for species in plots:
+        epoch = classifier_info.classifiers_info[species].epoch
+
+        for state in plots[species]:
+            fig, ax = plots[species][state]
+            ax.set_xscale("log")
+
+            if epoch != 1.0:
+                ax.set_xlabel(f"Time ($\\times {epoch}$ seconds)")
+            else:
+                ax.set_xlabel("Time (seconds)")
+
+            ax.set_ylabel("Behavioural Inertia")
+            ax.set_title(f"Species: {species.title()} | State: {state.title()}")
+
+            utilities.saveimg(fig, f"Behavioural-Inertia-{species}-{state}")
+
+    print("Behavioural inertia plot generation finished.")
+
+if __name__ == "__main__":
+    generate_behavioural_inertia_plots()

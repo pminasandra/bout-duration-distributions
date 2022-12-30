@@ -48,5 +48,9 @@ colors = {
 fit_line_style = 'dotted'
 
 
+# Survival analysis and plots
+survival_plot_color = "darkblue"
+
+
 # Miscellaneous
 SUPPRESS_INFORMATIVE_PRINT = False
