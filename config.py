@@ -7,7 +7,7 @@ import os.path
 
 
 #Directories
-PROJECTROOT = os.path.abspath("..")
+PROJECTROOT = os.path.abspath("/media/pranav/Data1/Personal/Projects/Bout_Duration_Distributions/")
 DATA = os.path.join(PROJECTROOT, "Data/")
 FIGURES = os.path.join(PROJECTROOT, "Figures/")
 

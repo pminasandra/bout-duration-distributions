@@ -1,5 +1,6 @@
 ---
 title: Bout duration distributions in animals
+author: Pranav Minasandra
 ---
 
 # Overview
@@ -40,24 +41,26 @@ The following packages have to be installed separately:
 
 ## Directory structure
 
-Prepare the following tree of directories (a.k.a folders) on your computer.
+Prepare the following tree of directories  on your computer.
 Note that the data files are big, and will take up some space.
 
 ```
 PROJECTROOT
-├── code
-├── Data
-└── Figures
+|-- code
+|-- Data
+|-- Figures
 ```
 
 **Note**: PROJECTROOT can be changed to any name of your choice, but make sure you use the appropriate commands below.
 
 # Usage
 
-Download this software to your system using 
-`git clone https://github.com/pminasandra/bout-duration-distributions code`
-while in your PROJECTROOT directory.
+Clone this repository, and place its contents in the `code` directory.
+Alternatively, you can run:
 
+`git clone https://github.com/pminasandra/bout-duration-distributions code`
+
+from within your PROJECTROOT directory.
 Enter the `code` directory, and run `gather-data.sh` to obtain all data used in this project.
 
 - Note 1: `gather-data.sh` is a bash script, and thus works only on linux or with git-bash maybe.
