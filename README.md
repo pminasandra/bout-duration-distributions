@@ -71,3 +71,7 @@ Soon, data for all species will be put up.
 Edit the file `config.py`, and change the variable "PROJECTROOT" to the path to your PROJECTROOT directory.
 After this, the code will run mostly automatically.
 
+# Other uses
+
+This software also computes [behavioural inertia](docs/behavioural-inertia.md), and performs simulations to 
+[demonstrate](docs/simulations.md) that classifiers don't cause heavy-tailed distributions in their predictions.

@@ -117,6 +117,30 @@ def compare_candidate_distributions(fit, data):
 
     return pd.DataFrame(dAICs)
 
+def choose_best_distribution(fit, data):
+    """
+    Computes the best fitting distribution.
+    Args:
+        fit (powerlaw.Fit): a fit of bout durations.
+        data (list like): the data which was used to fit this distribution.
+        args, kwargs: passed on to powerlaw.Fit()
+    Returns:
+        str: name of the distribution
+        fit.<distribution>
+    """
+
+    candidates = config.all_distributions(fit)
+    min_AIC = np.inf
+    best_fit = None
+    for candidate_name in candidates:
+        candidate = candidates[candidate_name]
+        AIC = aic(candidate, data)
+        if AIC < min_AIC:
+            min_AIC = AIC
+            best_fit = candidate_name
+
+    return best_fit, candidates[best_fit]
+
 def plot_data_and_fits(fits, state, fig, ax, plot_fits=False, **kwargs):
     """
     Plots cumulative complementary distribution function of data and fitted distributions

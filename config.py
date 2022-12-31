@@ -37,6 +37,13 @@ def all_distributions(fit):
 discrete = True
 xmin = 2.0
 
+distributions_to_numbers = {
+    'Exponential': 0,
+    'Lognormal': 1,
+    'Power_Law': 2,
+    'Truncated_Power_Law': 3
+}
+
 
 # Distribution plotting
 colors = {

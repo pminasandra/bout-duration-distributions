@@ -14,7 +14,7 @@ import numpy as np
 import config
 import utilities
 
-import simulations.config
+import simulations.sconfig
 
 if not config.SUPPRESS_INFORMATIVE_PRINT:
     print = utilities.sprint
@@ -24,7 +24,7 @@ class Simulator:
     Simulates a 2-behaviour behavioural sequence for a given number of bouts for each state.
     """
 
-    def __init__(self, bd_durations, ft_params, epoch):
+    def __init__(self, bd_distributions, ft_params, epoch):
         """
         Simulator initialisation:
         Args:
@@ -50,10 +50,10 @@ class Simulator:
         feature_values = {}
         states = list(self.bd_distributions.keys())
         for state in self.bd_distributions:
-            bout_values[state] = np.array(self.bd_distributions[state].generate_random(num_bouts)) * epoch
+            bout_values[state] = np.array(self.bd_distributions[state].generate_random(num_bouts)) * self.epoch
 
 
-        records = {"time": [], "state": [], "feature": []}
+        records = {"datetime": [], "state": [], "feature": []}
 
         current_time = 0
         for i in range(num_bouts):
@@ -62,37 +62,37 @@ class Simulator:
             mean, stdev = self.ft_params[current_state]
 
             records["state"].extend([current_state] * current_bout)
-            records["time"].extend(range(int(current_time), int(current_time + current_bout), int(epoch)))
+            records["datetime"].extend(range(int(current_time), int(current_time + current_bout), int(self.epoch)))
             records["feature"].extend(list(np.random.normal(mean, stdev, current_bout)))
 
             current_time += current_bout
 
         self.records = pd.DataFrame(records)
 
-# delete this stuff
-import matplotlib.pyplot as plt
-import powerlaw as pl
+if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+    import powerlaw as pl
 
-bd_distributions = {
-    'A': pl.Power_Law(xmin = config.xmin, parameters=[2.0], discrete=True),
-    'B': pl.Power_Law(xmin = config.xmin, parameters=[2.0], discrete=True)
-}
+    bd_distributions = {
+        'A': pl.Power_Law(xmin = config.xmin, parameters=[2.0], discrete=True),
+        'B': pl.Power_Law(xmin = config.xmin, parameters=[2.0], discrete=True)
+    }
 
-ft_params = {
-    'A': (-1, 0.005),
-    'B': (1, 0.005)
-}
+    ft_params = {
+        'A': (-1, 0.005),
+        'B': (1, 0.005)
+    }
 
-epoch = 1.0
+    epoch = 1.0
 
-simulator = Simulator(bd_distributions, ft_params, epoch)
-simulator.run(1000)
+    simulator = Simulator(bd_distributions, ft_params, epoch)
+    simulator.run(1000)
 
-records = simulator.records
-ft_A = records[records["state"] == "A"]
-ft_B = records[records["state"] == "B"]
-plt.plot(records["feature"], color="black")
-plt.eventplot(ft_A["time"], color="red", alpha=0.3)
-plt.eventplot(ft_B["time"], color="blue", alpha=0.3)
-plt.show()
+    records = simulator.records
+    ft_A = records[records["state"] == "A"]
+    ft_B = records[records["state"] == "B"]
+    plt.plot(records["feature"], color="black")
+    plt.eventplot(ft_A["time"], color="red", alpha=0.3)
+    plt.eventplot(ft_B["time"], color="blue", alpha=0.3)
+    plt.show()
 

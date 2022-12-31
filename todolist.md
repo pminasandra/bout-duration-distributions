@@ -9,6 +9,7 @@ author:Pranav Minasandra
 - [ ] sanity check: are all behaviours represented in all individuals, in each species?
 - [x] code to fit distributions to data, make plots
 - [x] code to plot instantaneous survival rate (or behavioural inertia)
-- [ ] write docs about behavioural inertia
-- [ ] simulation to test if classifiers cause heavy-tailedness
+- [x] write docs about behavioural inertia
+- [x] simulation to test if classifiers cause heavy-tailedness
+- [ ] write docs about simulations
 - [ ] discussions on how to proceed
