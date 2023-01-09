@@ -23,7 +23,7 @@ if not config.SUPPRESS_INFORMATIVE_PRINT:
 
 hyena_dir = os.path.join(config.DATA, "hyena")
 meerkat_dir = os.path.join(config.DATA, "meerkat")
-#TODO: coati_dir = os.path.join(config.DATA, coati)
+coati_dir = os.path.join(config.DATA, "coati")
 
 
 def as_bouts(dataframe, species):
@@ -94,7 +94,6 @@ def hyena_data_generator():
                "species": "hyena"
               }
 
-#TODO:
 def meerkat_data_generator():
     """
     *GENERATOR* yields behavioural sequence data and metadata for meerkats, individual-by-individual.
@@ -116,10 +115,34 @@ def meerkat_data_generator():
                "id": name,
                "species": "meerkat"
               }
-#TODO:
-#def coati_data_generator()
+def coati_data_generator():
+    """
+    *GENERATOR* yields behavioural sequence data and metadata for coatis, individual-by-individual.
+    Args:
+        None so far.
+    Yields:
+        dict, where
+            dict["data"]: pd.DataFrame
+            dict["id"]: str, identifying information for the individual
+            dict["species"]: str, species of the individual whose data is in dict["data"]
+    """
 
-generators = {"hyena": hyena_data_generator, "meerkat": meerkat_data_generator}
+    for coati in glob.glob(os.path.join(coati_dir, "*.csv")):
+        name = os.path.basename(coati)[:-len(".csv")]
+        read = pd.read_csv(coati, header=0)
+        read["datetime"] = pd.to_datetime(read["datetime"])
+        yield {
+               "data": as_bouts(read, "coati"),
+               "id": name,
+               "species": "coati"
+              }
+
+generators = {
+                "hyena": hyena_data_generator,
+                "meerkat": meerkat_data_generator,
+                "coati": coati_data_generator
+            }
+
 def bouts_data_generator():
     """
     *GENERATOR* yields behavioural sequence data and metadata for all species, individual-by-individual,

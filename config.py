@@ -13,7 +13,7 @@ FIGURES = os.path.join(PROJECTROOT, "Figures/")
 
 
 # Species
-species = ['hyena', 'meerkat'] #TODO: Eventually, 'coati' also goes here
+species = ['hyena', 'meerkat', 'coati']
 for s in species:
     assert s in os.listdir(DATA)
     assert os.path.isdir(os.path.join(DATA, s))

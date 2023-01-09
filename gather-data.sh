@@ -8,6 +8,7 @@ CurrDir=$PWD
 # Gathering hyena data
 echo "Gathering hyena data"
 cd "${PROJECTROOT}/Data"
+mkdir -v hyena
 cp -v /media/pranav/Data1/Personal/Projects/Strandburg-Peshkin\ 2019-20/Data/ClassificationsInTotal/*.csv ./hyena/ #Replace this with a git clone eventually
 cd hyena
 for f in $(ls); do
@@ -26,7 +27,10 @@ else
 fi
 
 # Gathering coati data
-# TODO
-
+echo "Gathering coati data"
+cd "${PROJECTROOT}/Data"
+mkdir -v coati
+cd coati
+cp -v /media/pranav/Data1/Personal/Projects/Coati_ACC_Pipeline_2022/Data/VeDBA_States/*.csv .
 cd ${CurrDir}
 exit 0
