@@ -13,3 +13,6 @@ author:Pranav Minasandra
 - [x] simulation to test if classifiers cause heavy-tailedness
 - [x] write docs about simulations
 - [ ] discussions on how to proceed
+- [ ] graphics to more convincingly make these arguments
+- [ ] (?) simulation to show effect of biased behavioural proportions
+- [ ] (?) simulation/maths to show that this is not just effect of hierarchical organisation
