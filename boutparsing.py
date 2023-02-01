@@ -26,7 +26,7 @@ meerkat_dir = os.path.join(config.DATA, "meerkat")
 coati_dir = os.path.join(config.DATA, "coati")
 
 
-def as_bouts(dataframe, species):
+def as_bouts(dataframe, species, randomize=False):
     """
     Reduces time-stamped behaviour sequences into bout information.
     """
@@ -34,6 +34,10 @@ def as_bouts(dataframe, species):
     epoch = classifier_info.classifiers_info[species].epoch
     datetimes = dataframe["datetime"].tolist()
     states = dataframe["state"].tolist()
+
+    if randomize:
+        import random
+        random.shuffle(states)
 
     current_state = "UNKNOWN"
     previous_state = "UNKNOWN"
@@ -72,11 +76,11 @@ def as_bouts(dataframe, species):
     return boutdf
 
 
-def hyena_data_generator():
+def hyena_data_generator(randomize=False):
     """
     *GENERATOR* yields behavioural sequence data and metadata for hyenas, individual-by-individual.
     Args:
-        None so far.
+        randomize (bool): whether to randomize data before extracting bouts.
     Yields:
         dict, where
             dict["data"]: pd.DataFrame
@@ -89,16 +93,16 @@ def hyena_data_generator():
         read = pd.read_csv(hyena, header=0)
         read["datetime"] = pd.to_datetime(read["datetime"])
         yield {
-               "data": as_bouts(read, "hyena"),
+               "data": as_bouts(read, "hyena", randomize=randomize),
                "id": name,
                "species": "hyena"
               }
 
-def meerkat_data_generator():
+def meerkat_data_generator(randomize=False):
     """
     *GENERATOR* yields behavioural sequence data and metadata for meerkats, individual-by-individual.
     Args:
-        None so far.
+        randomize (bool): whether to randomize data before extracting bouts.
     Yields:
         dict, where
             dict["data"]: pd.DataFrame
@@ -111,15 +115,15 @@ def meerkat_data_generator():
         read = pd.read_csv(meerkat, header=0)
         read["datetime"] = pd.to_datetime(read["datetime"])
         yield {
-               "data": as_bouts(read, "meerkat"),
+               "data": as_bouts(read, "meerkat", randomize=randomize),
                "id": name,
                "species": "meerkat"
               }
-def coati_data_generator():
+def coati_data_generator(randomize=False):
     """
     *GENERATOR* yields behavioural sequence data and metadata for coatis, individual-by-individual.
     Args:
-        None so far.
+        randomize (bool): whether to randomize data before extracting bouts.
     Yields:
         dict, where
             dict["data"]: pd.DataFrame
@@ -132,7 +136,7 @@ def coati_data_generator():
         read = pd.read_csv(coati, header=0)
         read["datetime"] = pd.to_datetime(read["datetime"])
         yield {
-               "data": as_bouts(read, "coati"),
+               "data": as_bouts(read, "coati", randomize=randomize),
                "id": name,
                "species": "coati"
               }
@@ -143,11 +147,11 @@ generators = {
                 "coati": coati_data_generator
             }
 
-def bouts_data_generator():
+def bouts_data_generator(randomize=False):
     """
     *GENERATOR* yields behavioural sequence data and metadata for all species, individual-by-individual,
     Args:
-        None so far
+        randomize (bool): whether to randomize data before extracting bouts.
     Yields:
         dict, where
             dict["data"]: pd.DataFrame
@@ -155,7 +159,7 @@ def bouts_data_generator():
             dict["species"]: str, species of the individual whose data is in dict["data"]
     """
     for species in config.species:
-        datasource = generators[species]()
+        datasource = generators[species](randomize=randomize)
         for databundle in datasource:
                 yield databundle
 

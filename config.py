@@ -57,6 +57,7 @@ fit_line_style = 'dotted'
 
 # Survival analysis and plots
 survival_plot_color = "darkblue"
+survival_randomization_plot_color = "darkgreen"
 
 
 # Miscellaneous

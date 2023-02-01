@@ -61,17 +61,19 @@ def compute_behavioural_inertia(dataframe, species, state):
     table = np.array([ts, BIs]).T
     return table
 
-def generate_behavioural_inertia_plots():
+def generate_behavioural_inertia_plots(add_randomized=False):
 
     print("Behavioural inertia plot generation initiated.")
     bdg = boutparsing.bouts_data_generator()
+    if add_randomized:
+        bdg_r = boutparsing.bouts_data_generator(randomize=True)
 
     plots = {}
     for databundle in bdg:
         species_ = databundle["species"]
         id_ = databundle["id"]
         data = databundle["data"]
-        print(f"Working on {id_}.")
+        print(f"Working on {species_} {id_}.")
 
         if species_ not in plots:
             plots[species_] = {}
@@ -85,6 +87,26 @@ def generate_behavioural_inertia_plots():
             survival_table = compute_behavioural_inertia(data, species_, state)
             fig, ax = plots[species_][state]
             ax.step(survival_table[:,0], survival_table[:,1], color=config.survival_plot_color, linewidth=0.75, alpha=0.4)
+
+    if add_randomized:
+        for databundle in bdg_r:
+            species_ = databundle["species"]
+            id_ = databundle["id"]
+            data = databundle["data"]
+            print(f"Working on randomised data for {species_} {id_}.")
+
+            if species_ not in plots:
+                plots[species_] = {}
+
+            states = fitting.states_summary(data)["states"]
+
+            for state in states:
+                if state not in plots[species_]:
+                    plots[species_][state] = plt.subplots()
+
+                survival_table = compute_behavioural_inertia(data, species_, state)
+                fig, ax = plots[species_][state]
+                ax.step(survival_table[:,0], survival_table[:,1], color=config.survival_randomization_plot_color, linewidth=0.75, alpha=0.4)
 
     print("Data analysis completed, saving plots.")
     for species in plots:
@@ -107,4 +129,4 @@ def generate_behavioural_inertia_plots():
     print("Behavioural inertia plot generation finished.")
 
 if __name__ == "__main__":
-    generate_behavioural_inertia_plots()
+    generate_behavioural_inertia_plots(add_randomized=False)
