@@ -141,6 +141,23 @@ def choose_best_distribution(fit, data):
 
     return best_fit, candidates[best_fit]
 
+def print_distribution(dist):
+    """
+    Returns str-representation of given distribution.
+    """
+
+    if type(dist) not in [pl.Exponential, pl.Power_Law, pl.Truncated_Power_Law, pl.Lognormal]:
+        raise ValueError(f"Unknown distribution type: {type(dist)}")
+
+    if type(dist) == pl.Exponential:
+        return f"Exponential(λ={dist.Lambda})"
+    elif type(dist) == pl.Power_Law:
+        return f"Power_Law(α={dist.alpha})"
+    elif type(dist) == pl.Truncated_Power_Law:
+        return f"Truncated_Power_Law(α={dist.alpha}; λ={dist.Lambda})"
+    elif type(dist) == pl.Lognormal:
+        return f"Lognormal(μ={dist.mu}; σ={dist.sigma})"
+
 def plot_data_and_fits(fits, state, fig, ax, plot_fits=False, **kwargs):
     """
     Plots cumulative complementary distribution function of data and fitted distributions
@@ -197,12 +214,14 @@ def test_for_powerlaws():
 
         for state in states:
             if state not in tables[species_]:
-                tables[species_][state] = pd.DataFrame(columns=["id", "Exponential", "Lognormal", "Power_Law", "Truncated_Power_Law"])
+                tables[species_][state] = pd.DataFrame(columns=["id", "Exponential", "Lognormal", "Power_Law", "Truncated_Power_Law", "best_fit"])
             if state not in plots[species_]:
                 plots[species_][state] = plt.subplots()
 
             table = compare_candidate_distributions(fits[state], data["duration"])
             table["id"] = databundle["id"]
+            _, best_dist = choose_best_distribution(fits[state], data["duration"])
+            table["best_fit"] = print_distribution(best_dist)
             tables[species_][state] = pd.concat([tables[species_][state], table])
 
             fig, ax = plots[species_][state]
