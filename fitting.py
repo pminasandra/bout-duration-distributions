@@ -25,6 +25,19 @@ import utilities
 if not config.SUPPRESS_INFORMATIVE_PRINT:
     print = utilities.sprint
 
+def preprocessing_df(dataframe, species):
+    """
+    Converts bouts to epoch units.
+    Ensures that the bouts of 1 epoch are removed, and any other preprocessing decided later.
+    """
+
+    df = dataframe.copy()
+    df["duration"] /= classifier_info.classifiers_info[species].epoch
+    df = df[df["duration"] >= config.xmin]
+
+    return df
+
+
 def states_summary(dataframe):
     """
     Finds all the states and provides a basic quantitative summary of these states.
@@ -48,6 +61,21 @@ def states_summary(dataframe):
     return results
 
 
+def statewise_bouts(dataframe):
+    """
+    Splits a dataframe to generate separate tables for each state
+    """
+
+    summary = states_summary(dataframe)
+    states = summary["states"]
+
+    statewise_bouts = {}
+
+    for state in states:
+        statewise_bouts[state] = dataframe[dataframe["state"] == state].copy()
+
+    return statewise_bouts
+    
 def fits_to_all_states(dataframe, *args, **kwargs):
     """
     Performs powerlaw.Fit for all states separately
@@ -62,14 +90,11 @@ def fits_to_all_states(dataframe, *args, **kwargs):
             dict[state]: powerlaw.Fit object.
     """
 
-    summary = states_summary(dataframe)
-    states = summary["states"]
-
+    statewise_bouts_data = statewise_bouts(dataframe)
     fitted_distributions = {}
 
-    for state in states:
-        state_bouts = dataframe[dataframe["state"] == state]
-        durations = state_bouts["duration"]
+    for state in statewise_bouts_data:
+        durations = statewise_bouts_data[state]["duration"]
 
         fit = pl.Fit(durations, *args, discrete=config.discrete, xmin=config.xmin, **kwargs)
 
@@ -202,7 +227,8 @@ def test_for_powerlaws():
         print("Processing ", databundle["species"], databundle["id"] + ".")
         data = databundle["data"]
         species_ = databundle["species"]
-        data["duration"] /= classifier_info.classifiers_info[species_].epoch
+        
+        data = preprocessing_df(data, species_)
 
         fits = fits_to_all_states(data, verbose=False)
         states = states_summary(data)["states"]

@@ -37,10 +37,7 @@ def compute_behavioural_inertia(dataframe, species, state, hazard_rate=False):
     xmin = config.xmin
     epoch = classifier_info.classifiers_info[species].epoch
 
-    dataframe = dataframe.copy()
-    dataframe["duration"] /= epoch
-
-    dataframe = dataframe[dataframe["duration"] >= config.xmin]
+    dataframe = fitting.preprocessing_df(dataframe, species)
     dataframe = dataframe[dataframe["state"] == state]
 
     unique_values = dataframe["duration"].unique()
