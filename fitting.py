@@ -104,7 +104,7 @@ def fits_to_all_states(dataframe, *args, **kwargs):
 
 
 def aic(distribution, data):
-    if type(distribution).__name__ in ['Lognormal', 'Truncated_Power_Law']:
+    if type(distribution).__name__ in ['Lognormal', 'Truncated_Power_Law', 'Stretched_Exponential']:
         params = 2
     elif type(distribution).__name__ in ['Exponential', 'Power_Law']:
         params = 1
@@ -171,7 +171,7 @@ def print_distribution(dist):
     Returns str-representation of given distribution.
     """
 
-    if type(dist) not in [pl.Exponential, pl.Power_Law, pl.Truncated_Power_Law, pl.Lognormal]:
+    if type(dist) not in [pl.Exponential, pl.Power_Law, pl.Truncated_Power_Law, pl.Lognormal, pl.Stretched_Exponential]:
         raise ValueError(f"Unknown distribution type: {type(dist)}")
 
     if type(dist) == pl.Exponential:
@@ -182,6 +182,8 @@ def print_distribution(dist):
         return f"Truncated_Power_Law(α={dist.alpha}; λ={dist.Lambda})"
     elif type(dist) == pl.Lognormal:
         return f"Lognormal(μ={dist.mu}; σ={dist.sigma})"
+    elif type(dist) == pl.Stretched_Exponential:
+        return f"Stretched_Exponential(λ={dist.Lambda}; β={dist.beta})"
 
 def plot_data_and_fits(fits, state, fig, ax, plot_fits=False, **kwargs):
     """
@@ -240,7 +242,7 @@ def test_for_powerlaws():
 
         for state in states:
             if state not in tables[species_]:
-                tables[species_][state] = pd.DataFrame(columns=["id", "Exponential", "Lognormal", "Power_Law", "Truncated_Power_Law", "best_fit"])
+                tables[species_][state] = pd.DataFrame(columns=["id", "Exponential", "Lognormal", "Power_Law", "Truncated_Power_Law", "Stretched_Exponential", "best_fit"])
             if state not in plots[species_]:
                 plots[species_][state] = plt.subplots()
 

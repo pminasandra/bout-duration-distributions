@@ -134,7 +134,7 @@ def coati_data_generator(randomize=False):
     for coati in glob.glob(os.path.join(coati_dir, "*.csv")):
         name = os.path.basename(coati)[:-len(".csv")]
         read = pd.read_csv(coati, header=0)
-        read["datetime"] = pd.to_datetime(read["datetime"])
+        read["datetime"] = pd.to_datetime(read["datetime"], format="mixed")
         yield {
                "data": as_bouts(read, "coati", randomize=randomize),
                "id": name,
