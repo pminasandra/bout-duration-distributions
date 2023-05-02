@@ -38,10 +38,6 @@ def compute_behavioural_inertia(dataframe, species, state, hazard_rate=False):
     epoch = classifier_info.classifiers_info[species].epoch
 
     dataframe = fitting.preprocessing_df(dataframe, species)
-    if species == "blackbuck":
-        durs = dataframe["duration"].tolist()
-        durs = [int(dur) for dur in durs]
-        dataframe["duration"] = durs
     dataframe = dataframe[dataframe["state"] == state]
 
     unique_values = dataframe["duration"].unique()

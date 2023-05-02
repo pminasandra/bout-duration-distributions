@@ -13,8 +13,7 @@ FIGURES = os.path.join(PROJECTROOT, "Figures/")
 
 
 # Species
-#species = ['hyena', 'meerkat', 'coati', 'blackbuck']
-species = ['blackbuck']
+species = ['hyena', 'meerkat', 'coati']
 for s in species:
     assert s in os.listdir(DATA)
     assert os.path.isdir(os.path.join(DATA, s))
@@ -62,23 +61,6 @@ survival_randomization_plot_color = "darkgreen"
 
 # Miscellaneous
 SUPPRESS_INFORMATIVE_PRINT = False
-
-
-# Blackbuck specific configuration
-Blackbuck_Disruptive_Events = ["D1", "D5", "D6", "D7", "D10", "D13", "MM", "MF", "EX", "EXoL", "Z", "DEP", "DN"] # TODO Confirm what Z, DEP is
-Blackbuck_Contiguous_Events = ["DR", "D2", "D3", "D4", "D14", "D12"]
-Blackbuck_States = ["F", "M", "S", "L", "oL", "D8", "D9", "D11"]
-
-Blackbuck_Reduced_State = {
-    "F": "Active",
-    "M": "Active",
-    "S": "Inactive",
-    "L": "Inactive",
-    "oL": "Inactive",
-    "D8": "Active",
-    "D9": "Active",
-    "D11": "Inactive"
-}
 
 if __name__=="__main__":
     import utilities

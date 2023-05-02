@@ -7,6 +7,5 @@ class ClassifierInfo:
 classifiers_info = {
     "hyena": ClassifierInfo("hyena", 3.0),
     "meerkat": ClassifierInfo("meerkat", 1.0),
-    "coati": ClassifierInfo("coati", 1.0),
-    "blackbuck": ClassifierInfo("blackbuck", 1.0)
+    "coati": ClassifierInfo("coati", 1.0)
 }
