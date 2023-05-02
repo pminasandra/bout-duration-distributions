@@ -96,7 +96,12 @@ def fits_to_all_states(dataframe, *args, **kwargs):
     for state in statewise_bouts_data:
         durations = statewise_bouts_data[state]["duration"]
 
-        fit = pl.Fit(durations, *args, discrete=config.discrete, xmin=config.xmin, **kwargs)
+        discrete = config.discrete
+        if "discrete" in kwargs:
+            discrete = kwargs["discrete"]
+            del kwargs["discrete"]
+        print(state, len(durations))
+        fit = pl.Fit(durations, *args, discrete=discrete, xmin=config.xmin, **kwargs)
 
         fitted_distributions[state] = fit
 
@@ -230,9 +235,11 @@ def test_for_powerlaws():
         data = databundle["data"]
         species_ = databundle["species"]
         
-        data = preprocessing_df(data, species_)
-
-        fits = fits_to_all_states(data, verbose=False)
+        if not "discrete" in databundle:
+            data = preprocessing_df(data, species_)
+            fits = fits_to_all_states(data, verbose=False)
+        else:
+            fits = fits_to_all_states(data, verbose=False, discrete=databundle["discrete"])
         states = states_summary(data)["states"]
 
         if species_ not in tables:
