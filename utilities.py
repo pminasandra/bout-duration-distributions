@@ -28,3 +28,8 @@ def saveimg(obj, name, directory=config.FIGURES):
 def sprint(*args, **kwargs):
     filename = str(inspect.stack()[1].filename)
     print(os.path.basename(filename)+":", *args, **kwargs)
+
+
+def lowerfirst(str_):
+    """Utility function, changes first char of string to lower case"""
+    return str[0].lower() + str[1:]

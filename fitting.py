@@ -270,7 +270,7 @@ def test_for_powerlaws():
             else:
                 ax.set_xlabel("Time (seconds)")
             ax.set_ylabel("CCDF")
-            ax.set_title(f"Species: {species.title()} | State: {state.title()}")
+            ax.set_title(f"{species.title()} {utilities.lowerfirst(state)}")
             utilities.saveimg(fig, f"Distribution-fits-{species}-{state}")
 
     print("Distribution fitting completed.")

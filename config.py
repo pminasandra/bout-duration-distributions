@@ -71,16 +71,16 @@ if __name__=="__main__":
     utilities.sprint(f"config.py speaking. current projectroot is {PROJECTROOT}")
 
 PRETTY_STATE_LABELS = {
-    "LYING": "Lying (head down)",
-    "LYUP": "Lying (head up)",
+    "LYING": "Lying down (with head down)",
+    "LYUP": "Lying down (with head up)",
     "STAND": "Standing",
     "WALK": "Walking",
     "LOPE": "Running",
 #
-    "Vigilance": "Vigilance / Resting",
+    "Vigilance": "Vigilant / Resting",
     "Foraging": "Foraging",
     "Running": "Running",
 #
-    "LOW": "Low activity",
-    "HIGH": "High activity"
+    "LOW": "In low activity",
+    "HIGH": "In high activity"
 }
