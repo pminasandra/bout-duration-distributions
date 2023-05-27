@@ -57,7 +57,11 @@ fit_line_style = 'dotted'
 # Survival analysis and plots
 survival_plot_color = "darkblue"
 survival_randomization_plot_color = "darkgreen"
+survival_xscale = "log" #Use "linear" 
+survival_yscale = "linear" #for typical
 
+survival_exclude_last_few_points = True
+survival_num_points_to_exclude = 100
 
 # Miscellaneous
 SUPPRESS_INFORMATIVE_PRINT = False

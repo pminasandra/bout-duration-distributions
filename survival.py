@@ -43,7 +43,11 @@ def compute_behavioural_inertia(dataframe, species, state, hazard_rate=False):
     unique_values = dataframe["duration"].unique()
     unique_values.sort()
     unique_values = unique_values[:-1] #Excluding the biggest bout because it contributes nothing here
+    if config.survival_exclude_last_few_points:
+        sorted_vals = np.sort(dataframe["duration"])
+        nth_from_last = sorted_vals[-config.survival_num_points_to_exclude]
 
+        unique_values = unique_values[unique_values < nth_from_last]
     ts = []
     BIs = []
 
@@ -93,6 +97,8 @@ def generate_behavioural_inertia_plots(add_randomized=False, hazard_rate=False):
             survival_table = compute_behavioural_inertia(data, species_, state, hazard_rate=hazard_rate)
             fig, ax = plots[species_][state]
             ax.step(survival_table[:,0], survival_table[:,1], color=config.survival_plot_color, linewidth=0.75, alpha=0.4)
+            ax.set_xscale(config.survival_xscale)
+            ax.set_yscale(config.survival_yscale)
 
     if add_randomized:
         for databundle in bdg_r:
