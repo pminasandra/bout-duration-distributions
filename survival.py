@@ -126,7 +126,7 @@ def generate_behavioural_inertia_plots(add_randomized=False, hazard_rate=False):
 
         for state in plots[species]:
             fig, ax = plots[species][state]
-            ax.set_xscale("log")
+            ax.set_xscale(config.survival_xscale)
 
             if epoch != 1.0:
                 ax.set_xlabel(f"Time ($\\times {epoch}$ seconds)")
