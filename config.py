@@ -81,6 +81,6 @@ PRETTY_STATE_LABELS = {
     "Foraging": "Foraging",
     "Running": "Running",
 #
-    "LOW": "In low activity",
-    "HIGH": "In high activity"
+    "Low": "In low activity",
+    "High": "In high activity"
 }

@@ -32,4 +32,4 @@ def sprint(*args, **kwargs):
 
 def lowerfirst(str_):
     """Utility function, changes first char of string to lower case"""
-    return str[0].lower() + str[1:]
+    return str_[0].lower() + str_[1:]

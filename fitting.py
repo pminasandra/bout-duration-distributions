@@ -269,8 +269,8 @@ def test_for_powerlaws():
                 ax.set_xlabel(f"Time ($\\times {epoch}$ seconds)")
             else:
                 ax.set_xlabel("Time (seconds)")
-            ax.set_ylabel("CCDF")
-            ax.set_title(f"{species.title()} {utilities.lowerfirst(state)}")
+            ax.set_ylabel("$\\Pr\\left(\\tau \\ge t \\right)$")
+            ax.set_title(f"{species.title()} {utilities.lowerfirst(config.PRETTY_STATE_LABELS[state])}")
             utilities.saveimg(fig, f"Distribution-fits-{species}-{state}")
 
     print("Distribution fitting completed.")
