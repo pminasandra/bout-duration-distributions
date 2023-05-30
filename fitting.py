@@ -22,6 +22,8 @@ import classifier_info
 import boutparsing
 import utilities
 
+plt.rcParams.update({'font.size': 20})
+
 if not config.SUPPRESS_INFORMATIVE_PRINT:
     print = utilities.sprint
 
@@ -244,7 +246,7 @@ def test_for_powerlaws():
             if state not in tables[species_]:
                 tables[species_][state] = pd.DataFrame(columns=["id", "Exponential", "Lognormal", "Power_Law", "Truncated_Power_Law", "Stretched_Exponential", "best_fit"])
             if state not in plots[species_]:
-                plots[species_][state] = plt.subplots()
+                plots[species_][state] = plt.subplots(layout='tight')
 
             table = compare_candidate_distributions(fits[state], data["duration"])
             table["id"] = databundle["id"]
@@ -269,7 +271,7 @@ def test_for_powerlaws():
                 ax.set_xlabel(f"Time ($\\times {epoch}$ seconds)")
             else:
                 ax.set_xlabel("Time (seconds)")
-            ax.set_ylabel("$\\Pr\\left(\\tau \\ge t \\right)$")
+            ax.set_ylabel(r"$\Pr(\tau ≥ t)$")
             ax.set_title(f"{species.title()} {utilities.lowerfirst(config.PRETTY_STATE_LABELS[state])}")
             utilities.saveimg(fig, f"Distribution-fits-{species}-{state}")
 

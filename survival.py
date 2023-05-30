@@ -22,6 +22,7 @@ import utilities
 if not config.SUPPRESS_INFORMATIVE_PRINT:
     print = utilities.sprint
 
+plt.rcParams.update({'font.size': 20})
 
 def compute_behavioural_inertia(dataframe, species, state, hazard_rate=False):
     """
@@ -92,7 +93,7 @@ def generate_behavioural_inertia_plots(add_randomized=False, hazard_rate=False):
 
         for state in states:
             if state not in plots[species_]:
-                plots[species_][state] = plt.subplots()
+                plots[species_][state] = plt.subplots(layout='tight')
 
             survival_table = compute_behavioural_inertia(data, species_, state, hazard_rate=hazard_rate)
             fig, ax = plots[species_][state]
