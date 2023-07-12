@@ -3,6 +3,7 @@
 # Dec 30, 2022
 
 import multiprocessing as mp
+import os.path
 
 import matplotlib.cm
 import matplotlib.pyplot as plt
@@ -95,8 +96,8 @@ def simulate_with_power_laws(distribution_name):
     fit_props = list(fit_props)
     names = list(config.distributions_to_numbers.keys()) + ["errors"]
     fit_props = pd.DataFrame(fit_props, columns=names)
-    fit_props["errors"]
     fit_props.sort_values(by="errors", inplace=True)
+    fit_props.to_csv(os.path.join(config.DATA, f"simulation_results_{distribution_name}.csv")index=False)
     vals = fit_props[list(config.distributions_to_numbers.keys())]
     ax.set_xscale("log")
     ax.stackplot(fit_props["errors"].to_numpy(),
@@ -106,9 +107,9 @@ def simulate_with_power_laws(distribution_name):
         vals["Truncated_Power_Law"].to_numpy(),
         labels = names[:-1]
     )
-    ax.set_xlabel("Unclassifiable data - proportion")
+    ax.set_xlabel("Classifier error")
     ax.set_ylabel("Best fit distribution - proportion")
     print(fit_props)
     ax.legend()
     ax.set_title(f"True distributions: {distribution_name}")
-    utilities.saveimg(fig, f"{distribution_name}-fits")
+    utilities.saveimg(fig, f"fits-{distribution_name}")
