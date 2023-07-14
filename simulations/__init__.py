@@ -97,7 +97,7 @@ def simulate_with_power_laws(distribution_name):
     names = list(config.distributions_to_numbers.keys()) + ["errors"]
     fit_props = pd.DataFrame(fit_props, columns=names)
     fit_props.sort_values(by="errors", inplace=True)
-    fit_props.to_csv(os.path.join(config.DATA, f"simulation_results_{distribution_name}.csv")index=False)
+    fit_props.to_csv(os.path.join(config.DATA, f"simulation_results_{distribution_name}.csv"), index=False)
     vals = fit_props[list(config.distributions_to_numbers.keys())]
     ax.set_xscale("log")
     ax.stackplot(fit_props["errors"].to_numpy(),
