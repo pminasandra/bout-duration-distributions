@@ -2,11 +2,11 @@
 # pminasandra.github.io
 # Dec 30, 2022
 
-def bayes_classify(dataframe):
+def bayes_classify(features):
     
-    predictions = dataframe.copy()
-    predictions["state"] = "A"
-    predictions.loc[predictions["feature"] > 0.0, 'state'] = "B"
+    predictions = features.copy()
+    predictions.loc[:] = "A"
+    predictions[features > 0.0] = "B"
 
     return predictions
 

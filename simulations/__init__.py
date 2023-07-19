@@ -27,38 +27,40 @@ if not config.SUPPRESS_INFORMATIVE_PRINT:
 
 cividis = matplotlib.cm.cividis
 
+#
+#def _parallel(mean_A, mean_B, bd_distributions, epoch, fit_props):
+#
+#    error = norm.cdf(mean_A)
+#    print(error)
+#    ft_params = {
+#        'A': (mean_A, simulations.sconfig.FEATURE_DIST_VARIANCE),
+#        'B': (mean_B, simulations.sconfig.FEATURE_DIST_VARIANCE)
+#    }
+#
+#    results = np.array([0] * (len(config.distributions_to_numbers) + 1))
+#    for i in range(simulations.sconfig.PER_PARAMETER):
+#        simulator = Simulator(bd_distributions, ft_params, epoch)
+#        print(error, ":", i)
+#        simulator.run(1000)
+#        simulator.records["datetime"] = pd.to_datetime(simulator.records["datetime"], unit='s')
+#        bayes_predictions = simulations.classifier.bayes_classify(simulator.records)
+#
+#        true_states = boutparsing.as_bouts(simulator.records, "meerkat") # The as_bouts(...) method needs a species, and has been repurposed here. "meerkat" ensures a 1s epoch is used. Also meerkats are cute.
+#        predicted_states = boutparsing.as_bouts(bayes_predictions, "meerkat")
+#
+##            true_fits = fitting.fits_to_all_states(true_states) #FIXME: This isn't a line of code we need, but it's a line of code we deserve.
+#        pred_fits = fitting.fits_to_all_states(predicted_states)
+#
+#        for state in ["A", "B"]:
+#            fit = pred_fits[state]
+#            pred_dist_name, pred_dist = fitting.choose_best_distribution(fit, predicted_states[predicted_states["state"] == state]["duration"])
+#            results[config.distributions_to_numbers[pred_dist_name]] += 1
+#
+#    results = 0.5*results/simulations.sconfig.PER_PARAMETER
+#    results[-1] = error
+#    fit_props.append(list(results))
 
-def _parallel(mean_A, mean_B, bd_distributions, epoch, fit_props):
-
-    error = norm.cdf(mean_A)
-    print(error)
-    ft_params = {
-        'A': (mean_A, simulations.sconfig.FEATURE_DIST_VARIANCE),
-        'B': (mean_B, simulations.sconfig.FEATURE_DIST_VARIANCE)
-    }
-
-    results = np.array([0] * (len(config.distributions_to_numbers) + 1))
-    for i in range(simulations.sconfig.PER_PARAMETER):
-        simulator = Simulator(bd_distributions, ft_params, epoch)
-        print(error, ":", i)
-        simulator.run(1000)
-        simulator.records["datetime"] = pd.to_datetime(simulator.records["datetime"], unit='s')
-        bayes_predictions = simulations.classifier.bayes_classify(simulator.records)
-
-        true_states = boutparsing.as_bouts(simulator.records, "meerkat")
-        predicted_states = boutparsing.as_bouts(bayes_predictions, "meerkat")
-
-#            true_fits = fitting.fits_to_all_states(true_states) #FIXME: This isn't a line of code we need, but it's a line of code we deserve.
-        pred_fits = fitting.fits_to_all_states(predicted_states)
-
-        for state in ["A", "B"]:
-            fit = pred_fits[state]
-            pred_dist_name, pred_dist = fitting.choose_best_distribution(fit, predicted_states[predicted_states["state"] == state]["duration"])
-            results[config.distributions_to_numbers[pred_dist_name]] += 1
-
-    results = 0.5*results/simulations.sconfig.PER_PARAMETER
-    results[-1] = error
-    fit_props.append(list(results))
+def _parallel()
 
 def simulate_with_power_laws(distribution_name):
 
@@ -68,6 +70,7 @@ def simulate_with_power_laws(distribution_name):
         simulations.sconfig.ERRORS_PARAMETER_SPACE_NUM
     )
 
+    
     if distribution_name == "Power_Law":
         bd_distributions = {
             'A': pl.Power_Law(xmin = config.xmin, parameters=[simulations.sconfig.POWER_LAW_ALPHA], discrete=config.discrete),
@@ -81,11 +84,17 @@ def simulate_with_power_laws(distribution_name):
     
     epoch = 1.0
     manager = mp.Manager()
-    fit_props = manager.list()
+    fit_results = manager.list()
+
+    ft_params = {
+        "A": (mean_a, simulations.sconfig.FEATURE_DIST_VARIANCE),
+        "B": (mean_b, simulations.sconfig.FEATURE_DIST_VARIANCE)
+        for (mean_a, mean_b) in parameter_space
+    }
 
     def _gen():
         for x, y in parameter_space:
-            yield x, y, bd_distributions, epoch, fit_props
+            yield ft_params, bd_distributions, epoch, fit_results
 
     fig, ax = plt.subplots()
 
@@ -93,6 +102,7 @@ def simulate_with_power_laws(distribution_name):
     pool.starmap(_parallel, _gen())
     pool.close()
 
+    # FIXME: EVERYTHING BELOW THIS
     fit_props = list(fit_props)
     names = list(config.distributions_to_numbers.keys()) + ["errors"]
     fit_props = pd.DataFrame(fit_props, columns=names)
