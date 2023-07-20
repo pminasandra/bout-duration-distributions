@@ -66,6 +66,16 @@ def _simulate_and_get_results(sim_count, ft_params, bd_distributions, epoch, fit
     fit_results.append(num_heavy_tails)
     fit_results_spec.append(num_heavy_tails_param_range)
 
+    # The mp.Pool() object has absolute garbage garbage collection
+    # Deleting all data manually here
+    del predicted_bouts
+    del pref_fits
+    del recs
+    del classifications
+    del simulator
+    del num_heavy_tails_param_range
+    del num_heavy_tails
+
 
 def simulate_with_power_laws(distribution_name):
 
@@ -81,6 +91,7 @@ def simulate_with_power_laws(distribution_name):
             'A': pl.Power_Law(xmin = config.xmin, parameters=[simulations.sconfig.POWER_LAW_ALPHA], discrete=config.discrete),
             'B': pl.Power_Law(xmin = config.xmin, parameters=[simulations.sconfig.POWER_LAW_ALPHA], discrete=config.discrete)   
         }
+
     elif distribution_name == "Exponential":
         bd_distributions = {
             'A': pl.Exponential(xmin = config.xmin, parameters=[simulations.sconfig.EXPONENTIAL_LAMBDA], discrete=config.discrete),
@@ -106,6 +117,7 @@ def simulate_with_power_laws(distribution_name):
     pool = mp.Pool(config.NUM_CORES)
     pool.starmap(_simulate_and_get_results, _gen())
     pool.close()
+    pool.join()
 
     fit_results = np.array(fit_results)
     fit_results_spec = np.array(fit_results_spec)

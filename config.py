@@ -66,7 +66,7 @@ survival_num_points_to_exclude = 100
 
 # Miscellaneous
 SUPPRESS_INFORMATIVE_PRINT = False
-NUM_CORES = int(mp.cpu_count()/2)
+NUM_CORES = int(mp.cpu_count()/2) - 2
 
 if __name__=="__main__":
     import utilities
