@@ -22,21 +22,39 @@ if not config.SUPPRESS_INFORMATIVE_PRINT:
 class Simulator:
     """
     Simulates a 2-behaviour behavioural sequence for a given number of bouts for each state.
+    Example usage:
+    >>> s = Simulator(...)
+    >>> s.run(...)
+    >>> s.records
+    <pd.DataFrame> with keys "datetime", "state", and "feature"
     """
 
     def __init__(self, bd_distributions, ft_params, epoch):
         """
-        Simulator initialisation:
+        Initialises simulator
+
         Args:
             bd_distributions (dict): where each key is the name of a behavioural state,
                 and each value is a bout duration distribution (in epoch units) with a valid generate_random() method.
-            ft_params (dict): where each key is the name of a behavioural state,
+            ft_params (dict or iterable of dicts): where each key is the name of a behavioural state,
                 and each value is a tuple of mean and standard deviation for a normal distribution.
             epoch (float): the temporal resolution of the behavioural sequences to be generated.
         """
+
+        # First, check if multiple features are needed
+        self.multiple_features = False
+        self.num_features = 1
+        assert type(ft_params) in [dict, list]
+        if type(ft_params) == list:
+            for ft_needed in ft_params:
+                assert type(ft_needed) == dict
+            self.multiple_features = True
+            self.num_features = len(ft_params)
+
         for state in bd_distributions:
             assert bd_distributions[state].generate_random
 
+        # Proceeding as usual
         self.bd_distributions = bd_distributions
         self.ft_params = ft_params
         self.epoch = int(epoch)
@@ -53,17 +71,30 @@ class Simulator:
             bout_values[state] = np.array(self.bd_distributions[state].generate_random(num_bouts)) * self.epoch
 
 
-        records = {"datetime": [], "state": [], "feature": []}
+        if not self.multiple_features:
+            records = {"datetime": [], "state": [], "feature": []}
+        else:
+            records = {"datetime": [], "state": []}
+            for i in range(len(self.ft_params)):
+                records[f"feature{i}"] = []
+
 
         current_time = 0
         for i in range(num_bouts):
             current_state = states[i % 2]
             current_bout = int(bout_values[state][i])
-            mean, stdev = self.ft_params[current_state]
+            if not self.multiple_features:
+                mean, stdev = self.ft_params[current_state]
 
             records["state"].extend([current_state] * current_bout)
             records["datetime"].extend(range(int(current_time), int(current_time + current_bout), int(self.epoch)))
-            records["feature"].extend(list(np.random.normal(mean, stdev, current_bout)))
+            if not self.multiple_features:
+                records["feature"].extend(list(np.random.normal(mean, stdev, current_bout)))
+
+            if self.multiple_features:
+                for i in range(len(self.ft_params)):
+                    mean, stdev = self.ft_params[i][current_state]
+                    records[f"feature{i}"].extend(list(np.random.normal(mean, stdev, current_bout)))
 
             current_time += current_bout
 
@@ -78,10 +109,13 @@ if __name__ == "__main__":
         'B': pl.Power_Law(xmin = config.xmin, parameters=[2.0], discrete=True)
     }
 
-    ft_params = {
+    ft_params = [{
         'A': (-1, 0.005),
         'B': (1, 0.005)
-    }
+    }, {
+        'A': (-1, 0.05),
+        'B': (1, 0.05)
+    }]
 
     epoch = 1.0
 
@@ -91,8 +125,9 @@ if __name__ == "__main__":
     records = simulator.records
     ft_A = records[records["state"] == "A"]
     ft_B = records[records["state"] == "B"]
-    plt.plot(records["feature"], color="black")
-    plt.eventplot(ft_A["time"], color="red", alpha=0.3)
-    plt.eventplot(ft_B["time"], color="blue", alpha=0.3)
+    plt.plot(records["feature0"], color="black", linewidth=0.3)
+    plt.plot(records["feature1"], color="gray", linewidth=0.3)
+    plt.eventplot(ft_A["datetime"], color="red", alpha=0.3)
+    plt.eventplot(ft_B["datetime"], color="blue", alpha=0.3)
     plt.show()
 

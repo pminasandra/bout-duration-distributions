@@ -27,38 +27,55 @@ if not config.SUPPRESS_INFORMATIVE_PRINT:
 
 cividis = matplotlib.cm.cividis
 
+# The below function will be run in parallel many times
+def _simulate_and_get_results(sim_count, ft_params, bd_distributions, epoch, fit_results, fit_results_spec):
 
-def _parallel(mean_A, mean_B, bd_distributions, epoch, fit_props):
+    np.random.seed()
+    print("Simulating #", sim_count)
+    simulator = Simulator(bd_distributions, ft_params, epoch)
+    simulator.run(sconfig.NUM_BOUTS)
+    simulator.records["datetime"] = pd.to_datetime(simulator.records["datetime"], unit='s')
 
-    error = norm.cdf(mean_A)
-    print(error)
-    ft_params = {
-        'A': (mean_A, simulations.sconfig.FEATURE_DIST_VARIANCE),
-        'B': (mean_B, simulations.sconfig.FEATURE_DIST_VARIANCE)
-    }
+    assert simulator.num_features > 1
 
-    results = np.array([0] * (len(config.distributions_to_numbers) + 1))
-    for i in range(simulations.sconfig.PER_PARAMETER):
-        simulator = Simulator(bd_distributions, ft_params, epoch)
-        print(error, ":", i)
-        simulator.run(1000)
-        simulator.records["datetime"] = pd.to_datetime(simulator.records["datetime"], unit='s')
-        bayes_predictions = simulations.classifier.bayes_classify(simulator.records)
+    num_heavy_tails = [0 for param in ft_params]
+    num_heavy_tails_param_range = [0 for param in ft_params]
 
-        true_states = boutparsing.as_bouts(simulator.records, "meerkat")
-        predicted_states = boutparsing.as_bouts(bayes_predictions, "meerkat")
+    for i in range(simulator.num_features):
+        classifications = simulations.classifier.bayes_classify(simulator.records[f"feature{i}"])
+        recs = simulator.records.copy()
+        recs = recs[["datetime", "state"]]
+        recs["state"] = classifications
 
-#            true_fits = fitting.fits_to_all_states(true_states) #FIXME: This isn't a line of code we need, but it's a line of code we deserve.
-        pred_fits = fitting.fits_to_all_states(predicted_states)
+        predicted_bouts = boutparsing.as_bouts(recs, "meerkat") # "meerkat" used only as a stand-in, since the code needs it on the data-processing side but not here
+        pred_fits = fitting.fits_to_all_states(predicted_bouts)
+
 
         for state in ["A", "B"]:
             fit = pred_fits[state]
-            pred_dist_name, pred_dist = fitting.choose_best_distribution(fit, predicted_states[predicted_states["state"] == state]["duration"])
-            results[config.distributions_to_numbers[pred_dist_name]] += 1
+            pred_dist_name, pred_dist = fitting.choose_best_distribution(fit, predicted_bouts[predicted_bouts["state"] == state]["duration"])
+            if pred_dist_name in ["Power_Law", "Truncated_Power_Law"]:
+                num_heavy_tails[i] += 1
+                if pred_dist.alpha < 3.0:
+                    num_heavy_tails_param_range[i] += 1
 
-    results = 0.5*results/simulations.sconfig.PER_PARAMETER
-    results[-1] = error
-    fit_props.append(list(results))
+    for nres in range(simulator.num_features):
+        num_heavy_tails[nres] /= 2.0
+        num_heavy_tails_param_range[nres] /= 2.0
+
+    fit_results.append(num_heavy_tails)
+    fit_results_spec.append(num_heavy_tails_param_range)
+
+    # The mp.Pool() object has absolute garbage garbage collection
+    # Deleting all data manually here
+    del predicted_bouts
+    del pref_fits
+    del recs
+    del classifications
+    del simulator
+    del num_heavy_tails_param_range
+    del num_heavy_tails
+
 
 def simulate_with_power_laws(distribution_name):
 
@@ -68,11 +85,13 @@ def simulate_with_power_laws(distribution_name):
         simulations.sconfig.ERRORS_PARAMETER_SPACE_NUM
     )
 
+    
     if distribution_name == "Power_Law":
         bd_distributions = {
             'A': pl.Power_Law(xmin = config.xmin, parameters=[simulations.sconfig.POWER_LAW_ALPHA], discrete=config.discrete),
             'B': pl.Power_Law(xmin = config.xmin, parameters=[simulations.sconfig.POWER_LAW_ALPHA], discrete=config.discrete)   
         }
+
     elif distribution_name == "Exponential":
         bd_distributions = {
             'A': pl.Exponential(xmin = config.xmin, parameters=[simulations.sconfig.EXPONENTIAL_LAMBDA], discrete=config.discrete),
@@ -81,35 +100,26 @@ def simulate_with_power_laws(distribution_name):
     
     epoch = 1.0
     manager = mp.Manager()
-    fit_props = manager.list()
+    fit_results = manager.list()
+    fit_results_spec = manager.list()
+
+    ft_params = [{
+        "A": (mean_a, simulations.sconfig.FEATURE_DIST_VARIANCE),
+        "B": (mean_b, simulations.sconfig.FEATURE_DIST_VARIANCE)}
+        for (mean_a, mean_b) in parameter_space]
+
 
     def _gen():
-        for x, y in parameter_space:
-            yield x, y, bd_distributions, epoch, fit_props
+        for sim_count in range(sconfig.PER_PARAMETER):
+            yield sim_count, ft_params, bd_distributions, epoch, fit_results, fit_results_spec
 
-    fig, ax = plt.subplots()
 
-    pool = mp.Pool(10)
-    pool.starmap(_parallel, _gen())
+    pool = mp.Pool(config.NUM_CORES)
+    pool.starmap(_simulate_and_get_results, _gen())
     pool.close()
+    pool.join()
 
-    fit_props = list(fit_props)
-    names = list(config.distributions_to_numbers.keys()) + ["errors"]
-    fit_props = pd.DataFrame(fit_props, columns=names)
-    fit_props.sort_values(by="errors", inplace=True)
-    fit_props.to_csv(os.path.join(config.DATA, f"simulation_results_{distribution_name}.csv")index=False)
-    vals = fit_props[list(config.distributions_to_numbers.keys())]
-    ax.set_xscale("log")
-    ax.stackplot(fit_props["errors"].to_numpy(),
-        vals["Exponential"].to_numpy(),
-        vals["Lognormal"].to_numpy(),
-        vals["Power_Law"].to_numpy(),
-        vals["Truncated_Power_Law"].to_numpy(),
-        labels = names[:-1]
-    )
-    ax.set_xlabel("Classifier error")
-    ax.set_ylabel("Best fit distribution - proportion")
-    print(fit_props)
-    ax.legend()
-    ax.set_title(f"True distributions: {distribution_name}")
-    utilities.saveimg(fig, f"fits-{distribution_name}")
+    fit_results = np.array(fit_results)
+    fit_results_spec = np.array(fit_results_spec)
+    np.savetxt(os.path.join(config.DATA, f"simulation_{distribution_name}_heavy_tails.npout"), fit_results)
+    np.savetxt(os.path.join(config.DATA, f"simulation_{distribution_name}_heavy_tails_params.npout"), fit_results_spec)

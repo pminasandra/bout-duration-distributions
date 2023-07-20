@@ -22,10 +22,8 @@ else:
         return scipy.stats.norm.ppf(y, scale=simulations.sconfig.FEATURE_DIST_VARIANCE)
 
 def parameter_values(error_start, error_end, error_num):
-    error_start_l = np.log(error_start)/np.log(10)
-    error_end_l = np.log(error_end)/np.log(10)
-    bayes_errors = np.logspace(error_start_l,
-                                error_end_l,
+    bayes_errors = np.linspace(error_start,
+                                error_end,
                                 error_num
                               )
 

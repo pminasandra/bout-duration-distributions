@@ -2,6 +2,7 @@
 # pminasandra.github.io
 # Dec 24, 2022
 
+import multiprocessing as mp
 import os
 import os.path
 
@@ -66,6 +67,7 @@ survival_num_points_to_exclude = 100
 
 # Miscellaneous
 SUPPRESS_INFORMATIVE_PRINT = False
+NUM_CORES = int(mp.cpu_count()/2) - 2
 
 if __name__=="__main__":
     import utilities
