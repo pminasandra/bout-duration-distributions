@@ -2,6 +2,8 @@
 # pminasandra.github.io
 # 20 Jul 2023
 
+from collections.abc import Iterable
+
 import numpy as np
 import pandas as pd
 
@@ -20,8 +22,18 @@ class AgentPool:
         """ #FIXME
 
         self.num_agents = num_agents
-        # TODO: Handle the bottom statement better based on whether it's iter of iters or iter of funcs
-        self.prob_switching = prob_switching
+        assert (isinstance(prob_switching, Iterable))
+        self.prob_switching = []
+        for item in prob_switching:
+            if isinstance(item, Iterable):
+                itemc = np.array(item)
+                assert itemc.dtype == float
+                assert len(itemc) == num_agents
+            elif callable(item):
+                itemc = item
+            else:
+                raise TypeError("AgentPool() __init__: Expected iterable or callable")
+            self.prob_switching.append(itemc)
 
         if init_condition is not None:
             self.records = init_condition
@@ -31,3 +43,5 @@ class AgentPool:
     @property
     def data(self):
         return pd.DataFrame(self.records)
+
+    def step(self)
