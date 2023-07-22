@@ -8,7 +8,8 @@ import os.path
 
 
 #Directories
-PROJECTROOT = os.path.abspath("/media/pranav/Data1/Personal/Projects/Bout_Duration_Distributions/")
+#PROJECTROOT = os.path.abspath("/media/pranav/Data1/Personal/Projects/Bout_Duration_Distributions/")
+PROJECTROOT = os.path.abspath("/media/pranav/Storage1/Projects/Bout_Duration_Distributions")
 DATA = os.path.join(PROJECTROOT, "Data/")
 FIGURES = os.path.join(PROJECTROOT, "Figures/")
 
@@ -66,7 +67,7 @@ survival_num_points_to_exclude = 100
 
 # Miscellaneous
 SUPPRESS_INFORMATIVE_PRINT = False
-NUM_CORES = int(mp.cpu_count()/2) - 2
+NUM_CORES = 4
 
 if __name__=="__main__":
     import utilities
