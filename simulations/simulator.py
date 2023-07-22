@@ -80,9 +80,13 @@ class Simulator:
 
 
         current_time = 0
-        for i in range(num_bouts):
+        i = 0
+        while i < num_bouts and current_time < simulations.sconfig.MAX_REC_TIME:
             current_state = states[i % 2]
             current_bout = int(bout_values[state][i])
+            if current_time + current_bout > simulations.sconfig.MAX_REC_TIME:
+                current_bout = simulations.sconfig.MAX_REC_TIME - current_time
+
             if not self.multiple_features:
                 mean, stdev = self.ft_params[current_state]
 
@@ -92,11 +96,12 @@ class Simulator:
                 records["feature"].extend(list(np.random.normal(mean, stdev, current_bout)))
 
             if self.multiple_features:
-                for i in range(len(self.ft_params)):
-                    mean, stdev = self.ft_params[i][current_state]
-                    records[f"feature{i}"].extend(list(np.random.normal(mean, stdev, current_bout)))
+                for j in range(len(self.ft_params)):
+                    mean, stdev = self.ft_params[j][current_state]
+                    records[f"feature{j}"].extend(list(np.random.normal(mean, stdev, current_bout)))
 
             current_time += current_bout
+            i += 1
 
         self.records = pd.DataFrame(records)
 

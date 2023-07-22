@@ -5,12 +5,10 @@
 import multiprocessing as mp
 import os.path
 
-import matplotlib.cm
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import powerlaw as pl
-from scipy.stats import norm
 
 import config
 import boutparsing
@@ -25,13 +23,10 @@ from simulations.simulator import Simulator
 if not config.SUPPRESS_INFORMATIVE_PRINT:
     print = utilities.sprint
 
-cividis = matplotlib.cm.cividis
-
 # The below function will be run in parallel many times
 def _simulate_and_get_results(sim_count, ft_params, bd_distributions, epoch, fit_results, fit_results_spec):
 
     np.random.seed()
-    print("Simulating #", sim_count)
     simulator = Simulator(bd_distributions, ft_params, epoch)
     simulator.run(sconfig.NUM_BOUTS)
     simulator.records["datetime"] = pd.to_datetime(simulator.records["datetime"], unit='s')
@@ -42,6 +37,7 @@ def _simulate_and_get_results(sim_count, ft_params, bd_distributions, epoch, fit
     num_heavy_tails_param_range = [0 for param in ft_params]
 
     for i in range(simulator.num_features):
+        print(sim_count, ":", i)
         classifications = simulations.classifier.bayes_classify(simulator.records[f"feature{i}"])
         recs = simulator.records.copy()
         recs = recs[["datetime", "state"]]
@@ -50,13 +46,12 @@ def _simulate_and_get_results(sim_count, ft_params, bd_distributions, epoch, fit
         predicted_bouts = boutparsing.as_bouts(recs, "meerkat") # "meerkat" used only as a stand-in, since the code needs it on the data-processing side but not here
         pred_fits = fitting.fits_to_all_states(predicted_bouts)
 
-
         for state in ["A", "B"]:
             fit = pred_fits[state]
             pred_dist_name, pred_dist = fitting.choose_best_distribution(fit, predicted_bouts[predicted_bouts["state"] == state]["duration"])
             if pred_dist_name in ["Power_Law", "Truncated_Power_Law"]:
                 num_heavy_tails[i] += 1
-                if pred_dist.alpha < 3.0:
+                if pred_dist.alpha < 2.0:
                     num_heavy_tails_param_range[i] += 1
 
     for nres in range(simulator.num_features):
@@ -66,6 +61,9 @@ def _simulate_and_get_results(sim_count, ft_params, bd_distributions, epoch, fit
     fit_results.append(num_heavy_tails)
     fit_results_spec.append(num_heavy_tails_param_range)
 
+
+    print("Simulation #", sim_count, "will now exit.")
+    return None
     # The mp.Pool() object has absolute garbage garbage collection
     # Deleting all data manually here
     del predicted_bouts
@@ -75,7 +73,6 @@ def _simulate_and_get_results(sim_count, ft_params, bd_distributions, epoch, fit
     del simulator
     del num_heavy_tails_param_range
     del num_heavy_tails
-
 
 def simulate_with_power_laws(distribution_name):
 
