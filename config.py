@@ -10,6 +10,9 @@ import os.path
 #Directories
 #PROJECTROOT = os.path.abspath("/media/pranav/Data1/Personal/Projects/Bout_Duration_Distributions/")
 PROJECTROOT = os.path.abspath("/media/pranav/Storage1/Projects/Bout_Duration_Distributions")
+if os.path.exists("cwd.txt"):
+    with open("cwd.txt") as cwd:
+        PROJECTROOT = cwd.read().rstrip()
 DATA = os.path.join(PROJECTROOT, "Data/")
 FIGURES = os.path.join(PROJECTROOT, "Figures/")
 
