@@ -11,12 +11,13 @@ class AgentPool:
     Attributes:
         num_agents (int)
         prob_switching (iter of iter or func)
-
     """
 
     def __init__(self, num_agents, prob_switching, init_condition=None):
         """
         UNDER CONSTRUCTION 
+        prob_switching (iter of iter or func)
+        init_condition(list-like with len=num_agents or None)
         """ #FIXME
 
         self.num_agents = num_agents

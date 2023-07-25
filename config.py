@@ -70,7 +70,7 @@ survival_num_points_to_exclude = 100
 
 # Miscellaneous
 SUPPRESS_INFORMATIVE_PRINT = False
-NUM_CORES = 4
+NUM_CORES = 8
 
 if __name__=="__main__":
     import utilities
