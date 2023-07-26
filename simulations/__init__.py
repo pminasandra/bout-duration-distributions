@@ -44,11 +44,14 @@ def _simulate_and_get_results(sim_count, ft_params, bd_distributions, epoch, fit
         recs["state"] = classifications
 
         predicted_bouts = boutparsing.as_bouts(recs, "meerkat") # "meerkat" used only as a stand-in, since the code needs it on the data-processing side but not here
+        predicted_bouts = predicted_bouts[predicted_bouts["duration"] >= config.xmin] # What a nasty well-hidden bug! Fixed 24.07.2023
         pred_fits = fitting.fits_to_all_states(predicted_bouts)
 
         for state in ["A", "B"]:
             fit = pred_fits[state]
-            pred_dist_name, pred_dist = fitting.choose_best_distribution(fit, predicted_bouts[predicted_bouts["state"] == state]["duration"])
+            bouts = predicted_bouts[predicted_bouts["state"] == state]
+            bouts = bouts["duration"]
+            pred_dist_name, pred_dist = fitting.choose_best_distribution(fit, bouts)
             if pred_dist_name in ["Power_Law", "Truncated_Power_Law"]:
                 num_heavy_tails[i] += 1
                 if pred_dist.alpha < 2.0:
