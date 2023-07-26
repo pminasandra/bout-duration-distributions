@@ -33,7 +33,7 @@ class AgentPool:
             self._probs = self.prob_switching
             assert len(self._probs) == num_agents
             for p in self._probs:
-                assert type(p) == float
+                assert isinstance(p, float)
                 assert 0 <= p
                 assert p <= 1
 
@@ -46,10 +46,10 @@ class AgentPool:
         elif callable(prob_switching):
             for i in range(self.num_agents):
                 p = prob_switching(i)
-                assert type(p) == float
+                assert isinstance(p, float)
                 assert 0 <= p
                 assert p <= 1
-            self.prob_switching = prob_switching
+            self.prob_switching = staticmethod(prob_switching)
 
         else:
             raise TypeError("prob_switching was not appropriate iterable or function")
