@@ -19,8 +19,10 @@ import simulations.sconfig
 import simulations.classifier
 import simulations.parameter_space
 from simulations.simulator import Simulator
+import simulations.mixed_exponentials
 
 if not config.SUPPRESS_INFORMATIVE_PRINT:
+    old_print = print
     print = utilities.sprint
 
 # The below function will be run in parallel many times
@@ -28,7 +30,7 @@ def _simulate_and_get_results(sim_count, ft_params, bd_distributions, epoch, fit
 
     np.random.seed()
     simulator = Simulator(bd_distributions, ft_params, epoch)
-    simulator.run(sconfig.NUM_BOUTS)
+    simulator.run(simulations.sconfig.NUM_BOUTS)
     simulator.records["datetime"] = pd.to_datetime(simulator.records["datetime"], unit='s')
 
     assert simulator.num_features > 1
@@ -77,7 +79,7 @@ def _simulate_and_get_results(sim_count, ft_params, bd_distributions, epoch, fit
     del num_heavy_tails_param_range
     del num_heavy_tails
 
-def simulate_with_power_laws(distribution_name):
+def simulate_with_distribution(distribution_name):
 
     parameter_space = simulations.parameter_space.parameter_values(
         simulations.sconfig.ERRORS_PARAMETER_SPACE_BEGIN,
@@ -123,3 +125,48 @@ def simulate_with_power_laws(distribution_name):
     fit_results_spec = np.array(fit_results_spec)
     np.savetxt(os.path.join(config.DATA, f"simulation_{distribution_name}_heavy_tails.npout"), fit_results)
     np.savetxt(os.path.join(config.DATA, f"simulation_{distribution_name}_heavy_tails_params.npout"), fit_results_spec)
+
+
+def _multiprocessing_helper_func(p, expl0, expl1, count, tgtlist, num_sims):
+    np.random.seed()
+    dist = simulations.mixed_exponentials.MixedExponential(p, expl0, expl1)
+    vals = dist.generate_random(simulations.sconfig.NUM_BOUTS)
+
+    bouts_df = pd.DataFrame({"state":["A"]*simulations.sconfig.NUM_BOUTS, "duration":vals})
+
+    pred_fits = fitting.fits_to_all_states(bouts_df)
+
+    for state in ["A"]:
+        fit = pred_fits[state]
+        bouts = bouts_df[bouts_df["state"] == state]
+        bouts = bouts["duration"]
+        dist_name, dist = fitting.choose_best_distribution(fit, bouts)
+        tgtlist[count] = dist_name
+
+
+def check_mixed_exps():
+    import pandas
+    NUM_SIMS = 5000
+    expl1 = 0.01
+
+    manager = mp.Manager()
+    list_ = manager.list()
+    list_.extend([0]*NUM_SIMS)
+
+    def parameter_generate():
+        exp2s = 10**(-3*np.random.uniform(size=NUM_SIMS) - 1)
+        ps = np.random.uniform(size=NUM_SIMS)
+        for i in range(NUM_SIMS):
+            pars = (ps[i], expl1, exp2s[i], i, list_, NUM_SIMS)
+            yield pars
+
+
+    parameter_generator = parameter_generate()
+    pool = mp.Pool(config.NUM_CORES - 3)
+    pool.starmap(_multiprocessing_helper_func, parameter_generator)
+    pool.close()
+    pool.join()
+
+    with open(os.path.join(config.DATA, "mixed_exp_fits.txt"), "w") as fd:
+        for dist in list_:
+            old_print(dist, file=fd)
