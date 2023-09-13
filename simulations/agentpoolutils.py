@@ -2,6 +2,7 @@
 # pminasandra.github.io
 # 26 Jul, 2023
 
+import numpy as np
 import pandas as pd
 
 import boutparsing
@@ -23,12 +24,14 @@ def recs_as_pd_dataframes(data):
 
     for i in range(num_agents):
         state = data[:, i]
-        state[state==-1.0] = "A"
-        state[state==1.0] = "B"
+        state_copy = np.empty(state.shape, dtype=str)
+        
+        state_copy[state == -1.0] = "A"
+        state_copy[state == 1.0] = "B"
         datetime = list(range(time))
 
-        df = pd.DataFrame({"datetime": datetime, "state": state}) 
-        df["datetime"] = pd.to_datetime(simulator.records["datetime"], unit='s')
+        df = pd.DataFrame({"datetime": datetime, "state": state_copy}) 
+        df["datetime"] = pd.to_datetime(df["datetime"], unit='s')
 
-        yield boutparsing.as_bouts(df)
+        yield boutparsing.as_bouts(df, "meerkat") #since meerkat is our 'default' for now
 

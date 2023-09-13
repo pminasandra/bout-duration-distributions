@@ -57,7 +57,7 @@ class AgentPool:
         if init_condition is not None:
             assert isinstance(init_condition, Iterable)
             for s in init_condition:
-                assert s in (1.0, -1.0)
+                assert s in (-1.0, 1.0)
             self.records = init_condition
         else:
             self.records = np.random.uniform(size=self.num_agents)
@@ -79,17 +79,17 @@ class AgentPool:
         if len(old_recs.shape) == 2:
             old_recs = old_recs[-1, :]
 
-        num_state_1 = len(old_recs[old_recs == 1.0])
+        num_state_1 = len(old_recs[old_recs == -1.0])
         num_state_2 = self.num_agents - num_state_1
 
         prob_1_2 = self.prob_switching(num_state_1)
         prob_2_1 = self.prob_switching(num_state_2)
 
-        mask_state1 = (old_recs == 1.0)
+        mask_state1 = (old_recs == -1.0)
         mask_state2 = ~mask_state1
 
-        old_recs[mask_state1 & (random_draws > prob_1_2)] = -1.0
-        old_recs[mask_state2 & (random_draws > prob_2_1)] = 1.0
+        old_recs[mask_state1 & (random_draws < prob_1_2)] = 1.0
+        old_recs[mask_state2 & (random_draws < prob_2_1)] = -1.0
 
         self.records = np.vstack((self.records, old_recs))
 
