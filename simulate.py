@@ -1,4 +1,6 @@
 
+import matplotlib.pyplot as plt
+
 import simulations
 import simulations.social
 
@@ -7,4 +9,9 @@ import simulations.social
 
 #simulations.check_mixed_exps()
 
-simulations.social.social_sync_simulation()
+fig, ax = plt.subplots()
+for i in range(10):
+    print(f"Social simulation, iteration {i}")
+    simulations.social.social_sync_simulation(fig, ax)
+
+plt.show()

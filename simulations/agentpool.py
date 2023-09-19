@@ -82,8 +82,8 @@ class AgentPool:
         num_state_1 = len(old_recs[old_recs == -1.0])
         num_state_2 = self.num_agents - num_state_1
 
-        prob_1_2 = self.prob_switching(num_state_1)
-        prob_2_1 = self.prob_switching(num_state_2)
+        prob_1_2 = self.prob_switching(num_state_2)
+        prob_2_1 = self.prob_switching(num_state_1)
 
         mask_state1 = (old_recs == -1.0)
         mask_state2 = ~mask_state1
