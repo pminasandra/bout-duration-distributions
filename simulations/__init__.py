@@ -79,6 +79,78 @@ def _simulate_and_get_results(sim_count, ft_params, bd_distributions, epoch, fit
     del num_heavy_tails_param_range
     del num_heavy_tails
 
+
+def _helper_func_for_specific_case(ft_params, bd_distributions, epoch, fig, ax):
+    # smelly code, but this just generates an illustration for a figure in the appendix.
+    # not really generally applicable
+    for i in range(20):
+        print(i)
+        np.random.seed()
+        simulator = Simulator(bd_distributions, ft_params, epoch)
+        simulator.run(simulations.sconfig.NUM_BOUTS)
+        simulator.records["datetime"] = pd.to_datetime(simulator.records["datetime"], unit='s')
+
+        actual_bouts = boutparsing.as_bouts(simulator.records[["datetime", "state"]], "meerkat")
+        actual_bouts = actual_bouts[actual_bouts["duration"] >= config.xmin] 
+
+        classifications = simulations.classifier.bayes_classify(simulator.records[f"feature5"])
+        recs = simulator.records.copy()
+        recs = recs[["datetime", "state"]]
+        recs["state"] = classifications
+
+        predicted_bouts = boutparsing.as_bouts(recs, "meerkat") # "meerkat" used only as a stand-in, since the code needs it on the data-processing side but not here
+        predicted_bouts = predicted_bouts[predicted_bouts["duration"] >= config.xmin] # What a nasty well-hidden bug! Fixed 24.07.2023
+
+        for state in ["A", "B"]:
+            act_durs = actual_bouts[actual_bouts["state"] == state].duration
+            pred_durs = predicted_bouts[predicted_bouts["state"] == state].duration
+
+            fit_actual = pl.Fit(act_durs, xmin=config.xmin, discrete=config.discrete)
+            fit_predicted = pl.Fit(pred_durs, xmin=config.xmin, discrete=config.discrete)
+
+            if i == 0 and state=="A":
+                act_label = "True bouts"
+                pred_label = "Bouts after classification"
+            elif i > 0 or state == "B":
+                act_label = None
+                pred_label = None
+            fit_actual.plot_ccdf(ax=ax, color="maroon", linewidth=0.5, label=act_label)
+            fit_predicted.plot_ccdf(ax=ax, color="maroon", linewidth=0.5, linestyle="dotted", label=pred_label)
+    ax.legend()
+    ax.set_xlabel("Bout duration (t)")
+    ax.set_ylabel(r"Pr$(\tau > t)$")
+
+
+def generate_illustration_at_crucial_error():
+    """
+    This generates an image with error rate 0.277.
+    This is useful for a figure in our paper, but is not generally
+    applicable at this stage.
+    """
+    parameter_space = simulations.parameter_space.parameter_values(
+        simulations.sconfig.ERRORS_PARAMETER_SPACE_BEGIN,
+        simulations.sconfig.ERRORS_PARAMETER_SPACE_END,
+        simulations.sconfig.ERRORS_PARAMETER_SPACE_NUM
+    )
+
+    bd_distributions = {
+        'A': pl.Exponential(xmin = config.xmin, parameters=[simulations.sconfig.EXPONENTIAL_LAMBDA], discrete=config.discrete),
+        'B': pl.Exponential(xmin = config.xmin, parameters=[simulations.sconfig.EXPONENTIAL_LAMBDA], discrete=config.discrete)   
+    }
+
+    epoch = 1.0
+    ft_params = [{
+        "A": (mean_a, simulations.sconfig.FEATURE_DIST_VARIANCE),
+        "B": (mean_b, simulations.sconfig.FEATURE_DIST_VARIANCE)}
+        for (mean_a, mean_b) in parameter_space]
+
+    vals = ft_params[5] # spurious detection of exponential as tpl
+
+    fig, ax = plt.subplots()
+    _helper_func_for_specific_case(ft_params, bd_distributions, epoch, fig, ax)
+    utilities.saveimg(fig, "simulations_illustration_max_ht")
+    plt.show()
+
 def simulate_with_distribution(distribution_name):
 
     parameter_space = simulations.parameter_space.parameter_values(

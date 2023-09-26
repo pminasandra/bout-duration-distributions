@@ -115,8 +115,8 @@ if __name__ == "__main__":
     }
 
     ft_params = [{
-        'A': (-1, 0.005),
-        'B': (1, 0.005)
+        'A': (-1, 0.75),
+        'B': (1, 0.75)
     }, {
         'A': (-1, 0.05),
         'B': (1, 0.05)
@@ -125,14 +125,29 @@ if __name__ == "__main__":
     epoch = 1.0
 
     simulator = Simulator(bd_distributions, ft_params, epoch)
-    simulator.run(1000)
+    simulator.run(50)
 
     records = simulator.records
     ft_A = records[records["state"] == "A"]
     ft_B = records[records["state"] == "B"]
+    #plt.plot(records["feature1"], color="gray", linewidth=0.3)
+    plt.eventplot(ft_A["datetime"], lineoffsets=2.5, linelengths=0.25, color="red", alpha=0.3)
+    plt.eventplot(ft_B["datetime"], lineoffsets=2.5, linelengths=0.25, color="blue", alpha=0.3)
+
+    import simulations.classifier
+
+    classifications = simulations.classifier.bayes_classify(simulator.records["feature0"])
+    df2 = pd.DataFrame({"datetime":records.datetime, "state":classifications})
+    ft_A = df2[classifications == "A"]
+    ft_B = df2[classifications == "B"]
+    #plt.plot(classifications["feature1"], color="gray", linewidth=0.3)
+    plt.eventplot(ft_A["datetime"], lineoffsets=-2.5, linelengths=0.25, color="red", alpha=0.3)
+    plt.eventplot(ft_B["datetime"], lineoffsets=-2.5, linelengths=0.25, color="blue", alpha=0.3)
+
     plt.plot(records["feature0"], color="black", linewidth=0.3)
-    plt.plot(records["feature1"], color="gray", linewidth=0.3)
-    plt.eventplot(ft_A["datetime"], color="red", alpha=0.3)
-    plt.eventplot(ft_B["datetime"], color="blue", alpha=0.3)
-    plt.show()
+    plt.xlabel("Time")
+    plt.ylabel("Feature value")
+
+    plt.savefig(os.path.join(config.PROJECTROOT, "temp", "illustration_classification_effect.pdf"))
+    plt.savefig(os.path.join(config.PROJECTROOT, "temp", "illustration_classification_effect.png"))
 
