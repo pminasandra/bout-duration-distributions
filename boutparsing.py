@@ -4,7 +4,6 @@
 
 """
 This module provides the following generators to use for data retrieval from all three species.
-<under construction>
 """
 
 import datetime as dt
@@ -76,7 +75,7 @@ def as_bouts(dataframe, species, randomize=False):
     return boutdf
 
 
-def hyena_data_generator(randomize=False):
+def hyena_data_generator(randomize=False, extract_bouts=True):
     """
     *GENERATOR* yields behavioural sequence data and metadata for hyenas, individual-by-individual.
     Args:
@@ -87,18 +86,23 @@ def hyena_data_generator(randomize=False):
             dict["id"]: str, identifying information for the individual
             dict["species"]: str, species of the individual whose data is in dict["data"]
     """
+    if not extract_bouts:
+        def postproc(*args, **kwargs):
+            return args[0]
+    else:
+        postproc = as_bouts
 
     for hyena in glob.glob(os.path.join(hyena_dir, "*.csv")):
         name = os.path.basename(hyena)[:-len(".csv")]
         read = pd.read_csv(hyena, header=0)
         read["datetime"] = pd.to_datetime(read["datetime"])
         yield {
-               "data": as_bouts(read, "hyena", randomize=randomize),
+               "data": postproc(read, "hyena", randomize=randomize),
                "id": name,
                "species": "hyena"
               }
 
-def meerkat_data_generator(randomize=False):
+def meerkat_data_generator(randomize=False, extract_bouts=True):
     """
     *GENERATOR* yields behavioural sequence data and metadata for meerkats, individual-by-individual.
     Args:
@@ -110,16 +114,23 @@ def meerkat_data_generator(randomize=False):
             dict["species"]: str, species of the individual whose data is in dict["data"]
     """
 
+    if not extract_bouts:
+        def postproc(*args, **kwargs):
+            return args[0]
+    else:
+        postproc = as_bouts
+
     for meerkat in glob.glob(os.path.join(meerkat_dir, "*/*.csv")):
         name = os.path.basename(meerkat)[:-len(".csv")]
         read = pd.read_csv(meerkat, header=0)
         read["datetime"] = pd.to_datetime(read["datetime"])
         yield {
-               "data": as_bouts(read, "meerkat", randomize=randomize),
+               "data": postproc(read, "meerkat", randomize=randomize),
                "id": name,
                "species": "meerkat"
               }
-def coati_data_generator(randomize=False):
+
+def coati_data_generator(randomize=False, extract_bouts=True):
     """
     *GENERATOR* yields behavioural sequence data and metadata for coatis, individual-by-individual.
     Args:
@@ -131,12 +142,18 @@ def coati_data_generator(randomize=False):
             dict["species"]: str, species of the individual whose data is in dict["data"]
     """
 
+    if not extract_bouts:
+        def postproc(*args, **kwargs):
+            return args[0]
+    else:
+        postproc = as_bouts
+
     for coati in glob.glob(os.path.join(coati_dir, "*.csv")):
         name = os.path.basename(coati)[:-len(".csv")]
         read = pd.read_csv(coati, header=0)
         read["datetime"] = pd.to_datetime(read["datetime"], format="mixed")
         yield {
-               "data": as_bouts(read, "coati", randomize=randomize),
+               "data": postproc(read, "coati", randomize=randomize),
                "id": name,
                "species": "coati"
               }
@@ -147,7 +164,7 @@ generators = {
                 "coati": coati_data_generator
             }
 
-def bouts_data_generator(randomize=False):
+def bouts_data_generator(randomize=False, extract_bouts=True):
     """
     *GENERATOR* yields behavioural sequence data and metadata for all species, individual-by-individual,
     Args:
@@ -159,7 +176,7 @@ def bouts_data_generator(randomize=False):
             dict["species"]: str, species of the individual whose data is in dict["data"]
     """
     for species in config.species:
-        datasource = generators[species](randomize=randomize)
+        datasource = generators[species](randomize=randomize, extract_bouts=extract_bouts)
         for databundle in datasource:
                 yield databundle
 
