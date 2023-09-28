@@ -22,7 +22,10 @@ import utilities
 if not config.SUPPRESS_INFORMATIVE_PRINT:
     print = utilities.sprint
 
-
+# NOTE: The below function has an argument, hazard_rate, that defaults to False.
+# Initially, we thought 1 - Hazard was a better pitch for the paper. However,
+# since, the paper has switched to hazard rate in totality. Make sure to always
+# turn hazard_rate to False whenever using this function.
 def compute_behavioural_inertia(dataframe, species, state, hazard_rate=False):
     """
     Computes behavioural inertia (see docs) for a given dataset.
