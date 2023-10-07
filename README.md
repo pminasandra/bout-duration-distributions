@@ -32,6 +32,9 @@ next instant. This discovery implies that wildly
 different mammals have decreasing hazard rates for all behavioural states.
 We also show that all bout duration distributions are near power-law or
 truncated power-law types. 
+Furthermore, we show that the memory of a time-series of behavior decays as
+a power-law up to a point (around 1000-3000 s), after which it changes to a more
+typical exponential decay.
 
 We use the module
 [`powerlaw`](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0085777)
@@ -61,6 +64,9 @@ The following packages have to be installed separately:
 - `numpy`
 - `pandas`
 - `powerlaw`
+- `scikit-learn` (for metrics)
+- `scipy`
+- `nolds` (for DFA)
 
 
 ## Installation
@@ -95,10 +101,13 @@ Run all indicated python scripts using a terminal, with the command `python3
 <script_name>.py`
 
 Upon release, there will be a `main.py`, running which will perform all the
-analyses needed for our paper. Running `fitting.py` generates all bout duration
-distributions and generates tables containing AIC values. Running `survival.py`
-creates plots with the hazard functions for all behaviours. Running
-`simulate.py` runs all simulations mentioned in the paper and its appendices.
+analyses needed for our paper. 
+For now, analyses are to be done as follows:
+Running `fitting.py` generates all bout duration
+distributions and generates tables containing AIC values. 
+Running `survival.py` creates plots with the hazard functions for all behaviours. 
+Running `persistence.py` performs DFA and mutual information decay analyses.
+Running `simulate.py` runs all simulations mentioned in the paper and its appendices.
 
 For academic colleagues, it is easy to re-work this code in your own analyses.
 Most functions also come with helpful docstrings, and the overall code structure
@@ -115,4 +124,6 @@ Useful classes are provided by `simulations/agentpool.py` and
 
 This software also computes [behavioural inertia](docs/behavioural-inertia.md),
 and performs simulations to [demonstrate](docs/simulations.md) that classifiers
-don't cause heavy-tailed distributions in their predictions.
+don't cause heavy-tailed distributions in their predictions, that social agents
+tend to have decreasing hazard functions, and that mixtures of random
+exponentials don't lead to power-laws.
