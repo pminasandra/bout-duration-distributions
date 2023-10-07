@@ -3,7 +3,7 @@
 # Sep 27, 2023
 
 """
-Implements Detrended Fluctuation Analysis for behavioral data.
+Implements Detrended Fluctuation Analysis and Predictive Information for behavioral data.
 Available functions:
     1. generate_time_series: Generates a time-series of an indicator function for the given state.
     2. alpha_DFA: computes DFA alpha exponent
@@ -14,9 +14,12 @@ Available functions:
 import multiprocessing as mp
 import os.path
 
+import matplotlib.pyplot as plt
 import nolds
 import numpy as np
 import pandas as pd
+from sklearn.metrics import adjusted_mutual_info_score
+import scipy.optimize
 
 import boutparsing
 import config
@@ -106,7 +109,7 @@ def compute_all_alpha_dfa(integrate=False):
     return MAIN_LIST
 
 
-def save_data(results):
+def save_dfa_data(results):
 
     unique = lambda iter_: list(set(iter_))
     unique_species = unique([x[0] for x in results])
@@ -133,6 +136,167 @@ def save_data(results):
         spdata.to_csv(os.path.join(config.DATA, f"DFA_{species}.csv"), index_label="id")
 
 
+def _time_slots_for_sampling(Tmin, Tmax, num):
+    return np.logspace(np.log10(Tmin), np.log10(Tmax), num).astype(int)
+
+
+def _mutual_information(vals1, vals2):
+    mi = adjusted_mutual_info_score(vals1, vals2)
+    return mi
+
+
+def _paired_past_future_indices(array, tdiff):
+    num_pairs = len(array) - tdiff
+    indices_start = np.arange(num_pairs)
+    indices_end = indices_start + tdiff
+
+    return indices_start, indices_end
+
+
+def _validated_paired_indices(dt_col, tdiff, indices_start, indices_end, epoch):
+    s_ends = dt_col[indices_end]
+    s_starts = dt_col[indices_start]
+
+    s_ends = s_ends.to_numpy()
+    s_starts = s_starts.to_numpy()
+
+    all_tdiffs = s_ends - s_starts
+    all_tdiffs *= 1e-9#because numpy measures time in ns for some reason
+    all_tdiffs = all_tdiffs.astype(float)
+# it sucks to work so much against numpy and pandas in a straightforward implementation of something
+    
+
+    mask =  all_tdiffs == tdiff*epoch #mask
+    return mask
+
+
+def MI_t(array, dt_col, T, epoch):
+    """
+    For a given time-series, quantifies the predictability of the animal's state
+    at time t+T given we know the state at time t.
+    Args:
+        array (pd.Series): behavioral sequence
+        dt_col (pd.Series): datetimes
+        T (int): lag period, number of epochs
+        epoch (float): epoch duration
+    Return:
+        Mutual information at T delay
+    """
+
+    t_starts, t_ends = _paired_past_future_indices(array, T)
+    dt_mask = _validated_paired_indices(dt_col, T, t_starts, t_ends, epoch)
+
+
+    t_starts = t_starts[dt_mask]
+    t_ends = t_ends[dt_mask]
+
+
+    array_starts = array[t_starts]
+    array_ends = array[t_ends]
+
+    if len(array_starts) <= 1000:
+        return np.nan
+    return _mutual_information(array_starts, array_ends)
+
+
+def mutual_information_decay(df, species, timelags):
+    """
+    Implements the above analyses for a range of time-lags for an individual.
+    Args:
+        df (pd.DataFrame): behavioral sequence information, typically from boutparsing.bouts_data_generator(...)
+        species (str): name of the species from which the df comes
+        timelags (array-like of floats): typically output from _time_slots_for_sampling(...)
+    """
+
+    dt_col = df["datetime"]
+    sequence = df["state"]
+
+    epoch = classifier_info.classifiers_info[species].epoch
+
+    mi_vals = []
+
+    for tau in timelags:
+        mi_vals.append(MI_t(sequence, dt_col, tau, epoch))
+
+    return mi_vals
+
+
+def _exp_func(x, m, lambda_):
+    return m*np.exp(-lambda_*x)
+
+def _pl_func(x, m, alpha):
+    return m*x**(-alpha)
+
+def _tpl_func(x, m, alpha, lambda_):
+    return m * x**-alpha * np.exp(-lambda_*x)
+
+def exponential_fit(x, *params):
+    return _exp_func(x, *params)
+
+def powerlaw_fit(x, *params):
+    return _pl_func(x, *params)
+
+def truncated_powerlaw_fit(x, *params):
+    return _tpl_func(x, *params)
+
+def fit_function(x, y, func):
+    if func.__name__ in ["exponential_fit", "powerlaw_fit"]:
+        p0 = (1,1)
+    elif func.__name__ == "truncated_powerlaw_fit":
+        p0 = (1,1,1)
+    params, covar = scipy.optimize.curve_fit(func, x, y, p0=p0)
+    return params, covar
+
+def complete_MI_analysis():
+    """
+    Runs all analyses for MI decay.
+    """
+
+    print("Mutual Information decay analysis initiated.")
+
+    bdg = boutparsing.bouts_data_generator(extract_bouts=False)
+    timelags = _time_slots_for_sampling(1, 5000, 10)
+    timelags = np.unique(timelags) #the first value is duplicated b/c log-scaling + rounding
+
+    fig, ax = plt.subplots()
+    print("complete_MI_analysis: will work on the following lags: ", *timelags)
+    plots = {}
+    i = 0
+    for databundle in bdg:
+        if i >= 5:
+            break
+        species_ = databundle["species"]
+        id_ = databundle["id"]
+        data = databundle["data"]
+
+        data["datetime"] = pd.to_datetime(data["datetime"])
+
+        print(f"MI decay analysis working on {species_} {id_}.")
+
+        mi_vals = mutual_information_decay(data, species_, timelags)
+        ax.plot(timelags, mi_vals, color="black", linewidth=0.7)
+        ax.set_xscale("log")
+        ax.set_yscale("log")
+
+        if i == 0:
+            (mexp, lambda_), _ = fit_function(timelags, mi_vals, exponential_fit)
+            (malpha, alpha), _ = fit_function(timelags, mi_vals, powerlaw_fit)
+            (mtrunc, talpha, tlambda_), _ = fit_function(timelags, mi_vals, truncated_powerlaw_fit)
+
+            print(f"Exponential fit: {mexp:.2f} * e**(-{lambda_:.2f}x)")
+            print(f"Powerlaw fit: {malpha:.2f} * x**-{alpha:.2f}")
+            print(f"Powerlaw fit: {mtrunc} * x**-{talpha:.2f} * e**-{tlambda_:.2f}x")
+
+            ax.plot(timelags, _exp_func(timelags, mexp, lambda_), color="blue", linestyle="dotted")
+            ax.plot(timelags, _pl_func(timelags, malpha, alpha), color="red", linestyle="dotted")
+            ax.plot(timelags, _tpl_func(timelags, mtrunc, talpha, tlambda_), color="maroon", linestyle="dotted")
+
+        i += 1
+    plt.show()
+        
+
+    
 if __name__ == "__main__":
-    results = compute_all_alpha_dfa()
-    save_data(results)
+#    results = compute_all_alpha_dfa()
+#    save_data(results)
+    complete_MI_analysis()
