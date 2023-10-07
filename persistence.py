@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 import nolds
 import numpy as np
 import pandas as pd
-from sklearn.metrics import adjusted_mutual_info_score
+from sklearn.metrics import adjusted_mutual_info_score, r2_score
 import scipy.optimize
 
 import boutparsing
@@ -247,6 +247,19 @@ def fit_function(x, y, func):
     params, covar = scipy.optimize.curve_fit(func, x, y, p0=p0)
     return params, covar
 
+def _R2_best_fits(funcs, params, xvals_actual, yvals_actual):
+    assert len(funcs) == len(params)
+    assert len(funcs) == 3
+
+    r2_vals = {}
+
+    for f, ps in zip(funcs, params):
+        fname = f.__name__
+        yvals_pred = f(xvals_actual, *ps)
+        r2 = r2_score(yvals_actual, yvals_pred)
+        r2_vals[fname] = r2
+    return r2_vals
+
 def complete_MI_analysis():
     """
     Runs all analyses for MI decay.
@@ -261,6 +274,7 @@ def complete_MI_analysis():
     fig, ax = plt.subplots()
     print("complete_MI_analysis: will work on the following lags: ", *timelags)
     plots = {}
+    r2_results = []
     i = 0
     for databundle in bdg:
         if i >= 5:
@@ -278,20 +292,30 @@ def complete_MI_analysis():
         ax.set_xscale("log")
         ax.set_yscale("log")
 
-        if i == 0:
-            (mexp, lambda_), _ = fit_function(timelags, mi_vals, exponential_fit)
-            (malpha, alpha), _ = fit_function(timelags, mi_vals, powerlaw_fit)
-            (mtrunc, talpha, tlambda_), _ = fit_function(timelags, mi_vals, truncated_powerlaw_fit)
+        (mexp, lambda_), _ = fit_function(timelags, mi_vals, exponential_fit)
+        (malpha, alpha), _ = fit_function(timelags, mi_vals, powerlaw_fit)
+        (mtrunc, talpha, tlambda_), _ = fit_function(timelags, mi_vals, truncated_powerlaw_fit)
 
+        r2s = _R2_best_fits((exponential_fit, powerlaw_fit, truncated_powerlaw_fit),
+                            ((mexp, lambda_),
+                            (malpha, alpha),
+                            (mtrunc, talpha, tlambda_)), timelags, mi_vals)
+        r2s["species"] = species_
+        r2s["id"] = id_
+        r2_results.append(r2s)
+
+        if i == 0:
             print(f"Exponential fit: {mexp:.2f} * e**(-{lambda_:.2f}x)")
             print(f"Powerlaw fit: {malpha:.2f} * x**-{alpha:.2f}")
-            print(f"Powerlaw fit: {mtrunc} * x**-{talpha:.2f} * e**-{tlambda_:.2f}x")
+            print(f"Powerlaw fit: {mtrunc} * x**-{talpha:.2f} * e**-{tlambda_:.4f}x")
 
             ax.plot(timelags, _exp_func(timelags, mexp, lambda_), color="blue", linestyle="dotted")
             ax.plot(timelags, _pl_func(timelags, malpha, alpha), color="red", linestyle="dotted")
             ax.plot(timelags, _tpl_func(timelags, mtrunc, talpha, tlambda_), color="maroon", linestyle="dotted")
 
         i += 1
+
+    print(pd.DataFrame(r2_results))
     plt.show()
         
 
