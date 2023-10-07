@@ -260,6 +260,24 @@ def _R2_best_fits(funcs, params, xvals_actual, yvals_actual):
         r2_vals[fname] = r2
     return r2_vals
 
+def _save_best_dist_params(funcs, params, r2vals):
+    max_r2 = -np.inf
+    best_fit = None
+    best_params = None
+
+    for candidate, paramset, r2 in zip(funcs, params, r2vals):
+        if r2 > max_r2:
+            max_r2 = r2
+            best_fit = candidate.__name__
+            best_params = paramset
+
+    if best_fit == "exponential_fit":
+        return {"best_fit":best_fit, "coefficient": best_params[0], "power_exponent": np.nan, "exponential_decay": best_params[1]}
+    elif best_fit == "powerlaw_fit":
+        return {"best_fit":best_fit, "coefficient": best_params[0], "power_exponent": best_params[1], "exponential_decay": np.nan}
+    if best_fit == "truncated_powerlaw_fit":
+        return {"best_fit":best_fit, "coefficient": best_params[0], "power_exponent": best_params[1], "exponential_decay": best_params[2]}
+
 def complete_MI_analysis():
     """
     Runs all analyses for MI decay.
@@ -268,21 +286,21 @@ def complete_MI_analysis():
     print("Mutual Information decay analysis initiated.")
 
     bdg = boutparsing.bouts_data_generator(extract_bouts=False)
-    timelags = _time_slots_for_sampling(1, 5000, 10)
+    timelags = _time_slots_for_sampling(1, 5000, 25)
     timelags = np.unique(timelags) #the first value is duplicated b/c log-scaling + rounding
 
-    fig, ax = plt.subplots()
     print("complete_MI_analysis: will work on the following lags: ", *timelags)
     plots = {}
     r2_results = []
-    i = 0
+    param_results = []
     for databundle in bdg:
-        if i >= 5:
-            break
         species_ = databundle["species"]
         id_ = databundle["id"]
         data = databundle["data"]
 
+        if species_ not in plots:
+            plots[species_] = plt.subplots()
+        fig, ax = plots[species_]
         data["datetime"] = pd.to_datetime(data["datetime"])
 
         print(f"MI decay analysis working on {species_} {id_}.")
@@ -300,23 +318,36 @@ def complete_MI_analysis():
                             ((mexp, lambda_),
                             (malpha, alpha),
                             (mtrunc, talpha, tlambda_)), timelags, mi_vals)
+        r2s_raw = list(r2s.values())
         r2s["species"] = species_
         r2s["id"] = id_
         r2_results.append(r2s)
 
-        if i == 0:
-            print(f"Exponential fit: {mexp:.2f} * e**(-{lambda_:.2f}x)")
-            print(f"Powerlaw fit: {malpha:.2f} * x**-{alpha:.2f}")
-            print(f"Powerlaw fit: {mtrunc} * x**-{talpha:.2f} * e**-{tlambda_:.4f}x")
+        pars = _save_best_dist_params((exponential_fit, powerlaw_fit, truncated_powerlaw_fit),
+                                      ((mexp, lambda_),
+                            (malpha, alpha),
+                            (mtrunc, talpha, tlambda_)), r2s_raw)
 
-            ax.plot(timelags, _exp_func(timelags, mexp, lambda_), color="blue", linestyle="dotted")
-            ax.plot(timelags, _pl_func(timelags, malpha, alpha), color="red", linestyle="dotted")
-            ax.plot(timelags, _tpl_func(timelags, mtrunc, talpha, tlambda_), color="maroon", linestyle="dotted")
+        pars["species"] = species_
+        pars["id"] = id_
+        param_results.append(pars)
 
-        i += 1
+        #ax.plot(timelags, _exp_func(timelags, mexp, lambda_), color="blue", linestyle="dotted")
+        #ax.plot(timelags, _pl_func(timelags, malpha, alpha), color="red", linestyle="dotted")
+        ax.plot(timelags, _tpl_func(timelags, mtrunc, talpha, tlambda_), color="maroon", linestyle="dotted", linewidth=0.5)
 
-    print(pd.DataFrame(r2_results))
-    plt.show()
+    pd.DataFrame(r2_results).to_csv(os.path.join(config.DATA, "MI_decay_R2s.csv"), index=False)
+    pd.DataFrame(param_results).to_csv(os.path.join(config.DATA, "MI_decay_params.csv"), index=False)
+
+    for species_ in plots:
+        fig, ax = plots[species_]
+        if classifier_info.classifiers_info[species_].epoch != 1.0:
+            ax.set_xlabel(f"Time lag ($\\times {classifier_info.classifiers_info[species_].epoch}$ seconds)")
+        else:
+            ax.set_xlabel("Time lag (seconds)")
+
+        ax.set_ylabel("Time-lagged mutual information")
+        utilities.saveimg(plots[species_][0], f"MI_decay_{species_}")
         
 
     
