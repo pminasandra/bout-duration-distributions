@@ -286,7 +286,7 @@ def complete_MI_analysis():
     print("Mutual Information decay analysis initiated.")
 
     bdg = boutparsing.bouts_data_generator(extract_bouts=False)
-    timelags = _time_slots_for_sampling(1, 5000, 25)
+    timelags = _time_slots_for_sampling(1, 5000, 50)
     timelags = np.unique(timelags) #the first value is duplicated b/c log-scaling + rounding
 
     print("complete_MI_analysis: will work on the following lags: ", *timelags)
