@@ -65,7 +65,7 @@ survival_xscale = "log" #Use "linear"
 survival_yscale = "linear" #for typical
 
 survival_exclude_last_few_points = True
-survival_num_points_to_exclude = 100
+survival_num_points_to_exclude = 50
 
 # Miscellaneous
 SUPPRESS_INFORMATIVE_PRINT = False
