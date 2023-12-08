@@ -221,32 +221,30 @@ def mutual_information_decay(df, species, timelags):
     return mi_vals
 
 
-def _exp_func(X, m, lambda_):
-    return np.log(m) - lambda_*np.exp(X)
+def _exp_func(x, m, lambda_):
+    return m*np.exp(-lambda_*x)
 
-def _pl_func(X, m, alpha):
-    return np.log(m) - alpha*X
+def _pl_func(x, m, alpha):
+    return m*x**(-alpha)
 
-def _tpl_func(X, m, alpha, lambda_):
-    return np.log(m) - alpha*X - lambda_*np.exp(X)
+def _tpl_func(x, m, alpha, lambda_):
+    return m * x**-alpha * np.exp(-lambda_*x)
 
-def exponential_fit(X, *params):
-    return _exp_func(X, *params)
+def exponential_fit(x, *params):
+    return _exp_func(x, *params)
 
-def powerlaw_fit(X, *params):
-    return _pl_func(X, *params)
+def powerlaw_fit(x, *params):
+    return _pl_func(x, *params)
 
-def truncated_powerlaw_fit(X, *params):
-    return _tpl_func(X, *params)
+def truncated_powerlaw_fit(x, *params):
+    return _tpl_func(x, *params)
 
 def fit_function(x, y, func):
     if func.__name__ in ["exponential_fit", "powerlaw_fit"]:
         p0 = (1,1)
     elif func.__name__ == "truncated_powerlaw_fit":
         p0 = (1,1,1)
-    X = np.log(x)
-    Y = np.log(y)
-    params, covar = scipy.optimize.curve_fit(func, X, Y, p0=p0)
+    params, covar = scipy.optimize.curve_fit(func, x, y, p0=p0)
     return params, covar
 
 def _R2_best_fits(funcs, params, xvals_actual, yvals_actual):
@@ -257,7 +255,7 @@ def _R2_best_fits(funcs, params, xvals_actual, yvals_actual):
 
     for f, ps in zip(funcs, params):
         fname = f.__name__
-        yvals_pred = np.exp(f(np.log(xvals_actual), *ps))
+        yvals_pred = f(xvals_actual, *ps)
         r2 = r2_score(yvals_actual, yvals_pred)
         r2_vals[fname] = r2
     return r2_vals
@@ -336,7 +334,7 @@ def complete_MI_analysis():
 
         #ax.plot(timelags, _exp_func(timelags, mexp, lambda_), color="blue", linestyle="dotted")
         #ax.plot(timelags, _pl_func(timelags, malpha, alpha), color="red", linestyle="dotted")
-        ax.plot(timelags, np.exp(_tpl_func(np.log(timelags), mtrunc, talpha, tlambda_)), color="maroon", linestyle="dotted", linewidth=0.5)
+        ax.plot(timelags, _tpl_func(timelags, mtrunc, talpha, tlambda_), color="maroon", linestyle="dotted", linewidth=0.5)
 
     pd.DataFrame(r2_results).to_csv(os.path.join(config.DATA, "MI_decay_R2s.csv"), index=False)
     pd.DataFrame(param_results).to_csv(os.path.join(config.DATA, "MI_decay_params.csv"), index=False)
@@ -355,5 +353,5 @@ def complete_MI_analysis():
     
 if __name__ == "__main__":
     complete_MI_analysis()
-    #results = compute_all_alpha_dfa()
-    #save_dfa_data(results)
+    results = compute_all_alpha_dfa()
+    save_data(results)
