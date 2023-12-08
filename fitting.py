@@ -11,6 +11,7 @@ for more details
 """
 
 import os.path
+import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -24,6 +25,8 @@ import utilities
 
 if not config.SUPPRESS_INFORMATIVE_PRINT:
     print = utilities.sprint
+
+insufficient_data_flag = config.insufficient_data_flag
 
 def preprocessing_df(dataframe, species):
     """
@@ -96,7 +99,11 @@ def fits_to_all_states(dataframe, *args, **kwargs):
     for state in statewise_bouts_data:
         durations = statewise_bouts_data[state]["duration"]
 
-        fit = pl.Fit(durations, *args, discrete=config.discrete, xmin=config.xmin, **kwargs)
+        if len(durations) < config.minimum_bouts_for_fitting:
+            warnings.warn(f"W: insufficient data for state {state}")
+            fit = config.insufficient_data_flag
+        else:
+            fit = pl.Fit(durations, *args, discrete=config.discrete, xmin=config.xmin, **kwargs)
 
         fitted_distributions[state] = fit
 
@@ -125,20 +132,25 @@ def compare_candidate_distributions(fit, data):
         list: containing \delta-AIC values
     """
 
-    candidates = config.all_distributions(fit)
-    AICs = {}
-    dAICs = {}
-    min_AIC = np.inf
-    for candidate_name in candidates:
-        candidate = candidates[candidate_name]
-        AIC = aic(candidate, data)
-        if AIC < min_AIC:
-            min_AIC = AIC
-        AICs[candidate_name] = AIC
+    if fit != insufficient_data_flag:
+        candidates = config.all_distributions(fit)
+        AICs = {}
+        dAICs = {}
+        min_AIC = np.inf
+        for candidate_name in candidates:
+            candidate = candidates[candidate_name]
+            AIC = aic(candidate, data)
+            if AIC < min_AIC:
+                min_AIC = AIC
+            AICs[candidate_name] = AIC
 
-    for candidate_name in candidates:
-        AICs[candidate_name] -= min_AIC
-        dAICs[candidate_name] =[AICs[candidate_name]] 
+        for candidate_name in candidates:
+            AICs[candidate_name] -= min_AIC
+            dAICs[candidate_name] =[AICs[candidate_name]] 
+    else:
+        dAICs = {}
+        for candidate_name in config.distributions_to_numbers.keys():
+            dAICs[candidate_name] = [config.insufficient_data_flag]
 
     return pd.DataFrame(dAICs)
 
@@ -154,22 +166,28 @@ def choose_best_distribution(fit, data):
         fit.<distribution>
     """
 
-    candidates = config.all_distributions(fit)
-    min_AIC = np.inf
-    best_fit = None
-    for candidate_name in candidates:
-        candidate = candidates[candidate_name]
-        AIC = aic(candidate, data)
-        if AIC < min_AIC:
-            min_AIC = AIC
-            best_fit = candidate_name
+    if fit != config.insufficient_data_flag:
+        candidates = config.all_distributions(fit)
+        min_AIC = np.inf
+        best_fit = None
+        for candidate_name in candidates:
+            candidate = candidates[candidate_name]
+            AIC = aic(candidate, data)
+            if AIC < min_AIC:
+                min_AIC = AIC
+                best_fit = candidate_name
+        return best_fit, candidates[best_fit]
+    else:
+        return config.insufficient_data_flag, config.insufficient_data_flag
 
-    return best_fit, candidates[best_fit]
 
 def print_distribution(dist):
     """
     Returns str-representation of given distribution.
     """
+
+    if dist == config.insufficient_data_flag:
+        return config.insufficient_data_flag
 
     if type(dist) not in [pl.Exponential, pl.Power_Law, pl.Truncated_Power_Law, pl.Lognormal, pl.Stretched_Exponential]:
         raise ValueError(f"Unknown distribution type: {type(dist)}")
@@ -198,17 +216,22 @@ def plot_data_and_fits(fits, state, fig, ax, plot_fits=False, **kwargs):
     """
 
     fit = fits[state]
-    fit.plot_ccdf(ax=ax, **kwargs)
-    candidate_dists = config.all_distributions(fit)
 
-    if not plot_fits:
+    if fit != config.insufficient_data_flag:
+        fit.plot_ccdf(ax=ax, **kwargs)
+        candidate_dists = config.all_distributions(fit)
+
+        if not plot_fits:
+            return fig, ax
+
+        for candidate_name in candidate_dists:
+            candidate = candidate_dists[candidate_name]
+            candidate.plot_ccdf(ax = ax, color=config.colors[candidate_name], linestyle=config.fit_line_style, linewidth=0.5, label=candidate_name)
+
+        return fig, ax
+    else:
         return fig, ax
 
-    for candidate_name in candidate_dists:
-        candidate = candidate_dists[candidate_name]
-        candidate.plot_ccdf(ax = ax, color=config.colors[candidate_name], linestyle=config.fit_line_style, linewidth=0.5, label=candidate_name)
-
-    return fig, ax
 
 def test_for_powerlaws():
     """

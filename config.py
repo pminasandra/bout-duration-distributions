@@ -65,7 +65,11 @@ survival_xscale = "log" #Use "linear"
 survival_yscale = "linear" #for typical
 
 survival_exclude_last_few_points = True
-survival_num_points_to_exclude = 50
+survival_num_points_to_exclude = 100
+
+# Fitting specific
+minimum_bouts_for_fitting = 250
+insufficient_data_flag = 'insufficient_data'
 
 # Miscellaneous
 SUPPRESS_INFORMATIVE_PRINT = False
