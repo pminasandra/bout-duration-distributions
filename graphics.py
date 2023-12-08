@@ -2,11 +2,13 @@
 # pminasandra.github.io
 # Jan 11, 2022
 
+import glob
 import os.path
 import random
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 import scipy.stats
 
 import config
@@ -174,10 +176,35 @@ def memory_and_memoriless():
     anim.save(os.path.join(GRAPHICS, "animations", "explainer_memory.gif"), writer=writer)
 
 
+def make_pie_charts():
+    """
+    Makes pie charts showing proportion of fits best matching powerlaw or truncated powerlaw
+    """
 
+    fitresults = os.path.join(config.DATA, "FitResults")
+    for species in config.species:
+        reldatadir = os.path.join(fitresults, species)
+
+        for datafile in glob.glob(os.path.join(reldatadir, "*.csv")):
+            if species == 'meerkat' and 'Running' in datafile:
+                continue
+
+            df = pd.read_csv(datafile, sep=',')
+            tot_inds = df.shape[0]
+
+            tot_heavy = (df['Power_Law'] == 0).sum()\
+                        + (df['Truncated_Power_Law'] == 0).sum()
+            fig, ax = plt.subplots()
+
+            prop = tot_heavy/tot_inds
+            ax.pie([prop, 1-prop], colors=['maroon', 'gray'])
+
+            state = os.path.basename(datafile)[:-len(".csv")]
+            utilities.saveimg(fig, f"piechart-{species}-{state}")
 
 if __name__ == "__main__":
     # behavioural_inertia_graphic()
     # hazard_and_ccdf()
     # behavioural_sequence()
-    memory_and_memoriless()
+    #memory_and_memoriless()
+    make_pie_charts()
