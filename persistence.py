@@ -354,4 +354,4 @@ def complete_MI_analysis():
 if __name__ == "__main__":
     complete_MI_analysis()
     results = compute_all_alpha_dfa()
-    save_data(results)
+    save_dfa_data(results)
