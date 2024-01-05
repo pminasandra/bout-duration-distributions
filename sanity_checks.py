@@ -96,6 +96,25 @@ def check_contextness():
         #states[species].append(states_)
     print("contextness check completed.")
 
+
+def generate_data_summary(datagen):
+    """
+    Generates a summary of available data and the bouts therein
+    Args:
+        datagen: a generator, typically from boutparsing.bouts_data_generator()
+    """
+
+    data_summaries = {}
+    for databundle in datagen:
+        species = databundle["species"]
+        id_ = databundle["id"]
+        data = databundle["data"]
+
+        if species not in data_summaries:
+            data_summaries[species] = {}
+
+
+
 if __name__ == "__main__":
     #check_state_consistency()
     check_contextness()
