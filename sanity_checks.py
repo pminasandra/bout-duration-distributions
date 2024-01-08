@@ -8,6 +8,7 @@ import os.path
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 import boutparsing
 import fitting
@@ -110,11 +111,41 @@ def generate_data_summary(datagen):
         id_ = databundle["id"]
         data = databundle["data"]
 
+        print(f"generate_data_summary: parsing {species} {id_}.")
         if species not in data_summaries:
             data_summaries[species] = {}
+        data_summaries[species][id_] = {}
+        data_summaries[species][id_]['data_available'] = len(data['state'])/3600.0
+        data_summaries[species][id_]['days_available'] =\
+                                len(data['datetime'].dt.date.unique())
+
+        data = boutparsing.as_bouts(data, species)
+        statewise_bouts = fitting.statewise_bouts(data)
+        for state in statewise_bouts:
+            data_summaries[species][id_][state.title()] =\
+                                len(statewise_bouts[state])
+
+    for species in data_summaries:
+        data_summ_df = pd.DataFrame(data_summaries[species])
+        data_summ_df = data_summ_df.T
+        for col in data_summ_df.columns:
+            if col != "data_available":#Stupid bug in new version of pandas
+                data_summ_df[col] = data_summ_df[col].astype(int)
+        data_summ_df['days_available'] =\
+                data_summ_df['days_available'].astype(int)
+        print(species, '\n', data_summ_df)
+        fd = open(os.path.join(config.DATA, f"data-summary-{species}.tex"),
+                                                                        "w")
+        old_print(data_summ_df.to_latex(index=False,
+                                    float_format="{:.3f}".format),
+                                file = fd)
+        fd.close()
 
 
 
 if __name__ == "__main__":
     #check_state_consistency()
-    check_contextness()
+    #check_contextness()
+
+    bdg = boutparsing.bouts_data_generator(extract_bouts=False)
+    generate_data_summary(bdg)
