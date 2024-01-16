@@ -12,12 +12,12 @@ PROJECTROOT = os.path.abspath("/media/pranav/Data1/Personal/Projects/Bout_Durati
 if os.path.exists("cwd.txt"):
     with open("cwd.txt") as cwd:
         PROJECTROOT = cwd.read().rstrip()
-DATA = os.path.join(PROJECTROOT, "Data/")
-FIGURES = os.path.join(PROJECTROOT, "Figures/")
+DATA = os.path.join(PROJECTROOT, "Data")
+FIGURES = os.path.join(PROJECTROOT, "Figures")
 
 
 # Species
-species = ['hyena', 'meerkat', 'coati']
+species = ['meerkat', 'coati', 'hyena']
 for s in species:
     assert s in os.listdir(DATA)
     assert os.path.isdir(os.path.join(DATA, s))
