@@ -11,18 +11,31 @@ The analyses in this code forms the basis of our [upcoming preprint](), <full ti
 
 ## People whose contributions were necessary for this project to get going
 [Ariana Strandburg-Peshkin](https://cocomo.group),
-Amlan Nayak, Emily Grout, and many many others.
+Emily Grout,
+[Meg Crofoot](https://www.ab.mpg.de/crofoot),
+Vlad Demartsev,
+[Andy Gersick](https://circle-polygon-6hmw.squarespace.com/),
+Ben Hirsch,
+[Kay Holekamp](https://www.holekamplab.org/),
+[Lily Johnson-Ulrich](http://lilyjohnsonulrich.weebly.com/),
+Amlan Nayak,
+Josue Ortega,
+[Marie Roch](https://roch.sdsu.edu/),
+[Eli Strauss](https://straussed.github.io/),
+Marta Manser,
+Frants Jensen,
+Baptiste Averly,
+and many others
 
 # Overview
 
 This project ties together results from behavioural classifiers built using
 [hyenas](https://github.com/pminasandra/hyena-acc),
-[meerkats](https://github.com/amlan-nayak/meerkat-box),
+[meerkats](https://github.com/pminasandra/meerkat-acc),
 [coatis](https://github.com/pminasandra/Coati_ACC_Pipeline). Here, I find
-bout duration distributions for all classified behaviours for each individual of
-each species. This project stems from the serendipitous discovery of
-heavy-tailed bout duration distributions in spotted hyenas in 2019 by Pranav
-Minasandra. 
+patterns in behavior dynamics for all classified behaviours for each individual of
+each species. This project stems from my serendipitous discovery of
+heavy-tailed bout duration distributions in spotted hyenas in 2019.
 
 Heavy-tailed distributions of bout durations could imply that self-reinforcement
 plays a role in behavioural dynamics at the fine scale: such distributions have
@@ -34,7 +47,8 @@ We also show that all bout duration distributions are near power-law or
 truncated power-law types. 
 Furthermore, we show that the memory of a time-series of behavior decays as
 a power-law up to a point (around 1000-3000 s), after which it changes to a more
-typical exponential decay.
+typical exponential decay. We show this in many different ways (check out our
+pre-print above!)
 
 We use the module
 [`powerlaw`](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0085777)
@@ -84,15 +98,9 @@ chmod +x setup.sh
 ./setup.sh
 ```
 
-This will set up necessary directories on your computer. Then, enter the code
-directory and run the gather-data.sh script to obtain the behaviour sequences
-necessary to run this software.
-
-```
-cd code/
-chmod +x gather-data.sh
-./gather-data.sh
-```
+In the Data/ directory, create directories for each species ('meerkat', 'coati',
+and 'hyena') that each contain behavior sequences for each individual of that
+species. Also create the directory 'FitResults' for storing data tables.
 
 
 # Usage
@@ -100,9 +108,7 @@ chmod +x gather-data.sh
 Run all indicated python scripts using a terminal, with the command `python3
 <script_name>.py`
 
-Upon release, there will be a `main.py`, running which will perform all the
-analyses needed for our paper. 
-For now, analyses are to be done as follows:
+Analyses are to be done as follows:
 Running `fitting.py` generates all bout duration
 distributions and generates tables containing AIC values. 
 Running `survival.py` creates plots with the hazard functions for all behaviours. 
@@ -119,11 +125,3 @@ speeds up work tremendously in our case.
 Useful classes are provided by `simulations/agentpool.py` and
 `simulations/simulator.py`, and generally helpful functions are found in
 `boutparsing.py` and `fitting.py`.
-
-# Other uses
-
-This software also computes [behavioural inertia](docs/behavioural-inertia.md),
-and performs simulations to [demonstrate](docs/simulations.md) that classifiers
-don't cause heavy-tailed distributions in their predictions, that social agents
-tend to have decreasing hazard functions, and that mixtures of random
-exponentials don't lead to power-laws.
