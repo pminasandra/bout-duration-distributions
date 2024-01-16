@@ -2,6 +2,11 @@
 # pminasandra.github.io
 # 26 Jul, 2023
 
+"""
+Wrapper around agentpool and agentpoolutils to perform social interaction
++ behavior dynamics sims
+"""
+
 import sys
 
 import matplotlib.pyplot as plt
@@ -13,7 +18,7 @@ import survival
 from simulations.agentpool import AgentPool
 from simulations.agentpoolutils import recs_as_pd_dataframes
 
-def lin_between(p_begin, p_end, num):
+def _lin_between(p_begin, p_end, num):
     p_begin = float(p_begin)
     p_end = float(p_end)
 
@@ -25,7 +30,7 @@ def lin_between(p_begin, p_end, num):
     return _f
 
 
-def log_between(p_begin, p_end, num):
+def _log_between(p_begin, p_end, num):
     p_begin = float(p_begin)
     p_end = float(p_end)
 
@@ -41,7 +46,11 @@ def log_between(p_begin, p_end, num):
 
 
 def social_sync_simulation(fig=None, ax=None):
-    pfunc = log_between(1e-2, 1e-1, 10)
+    """
+    Simulates social pool of interacting agents, plots hazard 
+    functions of their bouts
+    """
+    pfunc = _log_between(1e-2, 1e-1, 10)
     agentpool = AgentPool(10, pfunc)
     agentpool.run(50000)
 
@@ -50,8 +59,9 @@ def social_sync_simulation(fig=None, ax=None):
         fig, ax = plt.subplots()
 
     for df in recs_as_pd_dataframes(agentpool.data):
-        for state in ["A", "B"]:
-            hz_rate_table = survival.compute_behavioural_inertia(df, "meerkat", state, hazard_rate=True) #since meerkat is 'default' for now
+        for state in ["A", "B"]: #WLOG since A and B are identical here
+            hz_rate_table = survival.compute_behavioural_inertia(df, "meerkat",
+                            state, hazard_rate=True) #since meerkat is 'default' for now
             hz_tables.append(hz_rate_table)
             data =sum([arr[0:50,] for arr in hz_tables])/len(hz_tables)
             ax.plot(data[:,0], data[:,1], linewidth=0.3, color='blue')
@@ -59,7 +69,7 @@ def social_sync_simulation(fig=None, ax=None):
     return fig, ax
 
 if __name__ == "__main__":
-    pfunc = log_between(1e-2, 1e-4, 10)
+    pfunc = _log_between(1e-2, 1e-4, 10)
     agentpool = AgentPool(10, pfunc)
     agentpool.run(100)
     print(agentpool.data)
