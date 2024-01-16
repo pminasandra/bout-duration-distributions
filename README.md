@@ -102,6 +102,9 @@ In the Data/ directory, create directories for each species ('meerkat', 'coati',
 and 'hyena') that each contain behavior sequences for each individual of that
 species. Also create the directory 'FitResults' for storing data tables.
 
+In the code/ directory, create a file called 'cwd.txt' that, on the very first
+line, lists the path to the projectroot (the directory created above that now
+contains the 'code', 'Data', and 'Figures' subdirectories).
 
 # Usage
 
