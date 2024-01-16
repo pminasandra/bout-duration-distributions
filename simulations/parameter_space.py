@@ -22,6 +22,11 @@ else:
         return scipy.stats.norm.ppf(y, scale=simulations.sconfig.FEATURE_DIST_VARIANCE)
 
 def parameter_values(error_start, error_end, error_num):
+    """
+    *GENERATOR* yields all errors in the stipulated range.
+    Modify to np.logspace or any other choice in the body of the 
+    function to get desired results.
+    """
     bayes_errors = np.linspace(error_start,
                                 error_end,
                                 error_num
