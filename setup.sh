@@ -12,6 +12,7 @@ cpwd=$PWD
 cd dirname $0
 mkdir code/ 
 mv ./* code/
+mv ./.git code/.git
 mkdir Data/{,coati,hyena,meerkat} Figures/
 
 cd $cpwd
