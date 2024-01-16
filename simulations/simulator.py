@@ -106,6 +106,7 @@ class Simulator:
         self.records = pd.DataFrame(records)
 
 if __name__ == "__main__":
+# The below code is just an example provided to generate a helpful illustration
     import matplotlib.pyplot as plt
     import powerlaw as pl
 
