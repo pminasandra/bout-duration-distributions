@@ -34,6 +34,7 @@ def _simulate_and_get_results(sim_count, ft_params, bd_distributions, epoch, fit
     simulator.records["datetime"] = pd.to_datetime(simulator.records["datetime"], unit='s')
 
     assert simulator.num_features > 1
+# because we've decided to try numerous error rates at once
 
     num_heavy_tails = [0 for param in ft_params]
     num_heavy_tails_param_range = [0 for param in ft_params]
@@ -54,9 +55,9 @@ def _simulate_and_get_results(sim_count, ft_params, bd_distributions, epoch, fit
             bouts = predicted_bouts[predicted_bouts["state"] == state]
             bouts = bouts["duration"]
             pred_dist_name, pred_dist = fitting.choose_best_distribution(fit, bouts)
-            if pred_dist_name in ["Power_Law", "Truncated_Power_Law"]:
+            if pred_dist_name in ["Power_Law", "Truncated_Power_Law"]:# is it scale-free?
                 num_heavy_tails[i] += 1
-                if pred_dist.alpha < 2.0:
+                if pred_dist.alpha < 2.0:# is it scale-free with fun params?
                     num_heavy_tails_param_range[i] += 1
 
     for nres in range(simulator.num_features):
@@ -152,6 +153,10 @@ def generate_illustration_at_crucial_error():
     plt.show()
 
 def simulate_with_distribution(distribution_name):
+    """
+    Simulates numerous datasets from a distribution, passes the, through error-
+    prone classifiers, and performs fits on the resulting data.
+    """
 
     parameter_space = simulations.parameter_space.parameter_values(
         simulations.sconfig.ERRORS_PARAMETER_SPACE_BEGIN,
@@ -217,6 +222,10 @@ def _multiprocessing_helper_func(p, expl0, expl1, count, tgtlist, num_sims):
 
 
 def check_mixed_exps():
+    """
+    Simulates data from numerous mixed exponentials (with 2 components mixed),
+    and checks the best-fit for the resulting data
+    """
     import pandas
     NUM_SIMS = 5000
     expl1 = 0.01
