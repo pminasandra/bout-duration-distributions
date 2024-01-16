@@ -16,6 +16,7 @@ if not config.SUPPRESS_INFORMATIVE_PRINT:
 class MixedExponential:
     """
     Class that mimics distribtions in the module powerlaw
+    Acts as a mixture of two exponential distributions
     """
     def __init__(self, p_0, exp_lambda_0, exp_lambda_1, xmin=config.xmin, discrete=config.discrete):
         """
