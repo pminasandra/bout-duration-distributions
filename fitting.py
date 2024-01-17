@@ -315,6 +315,7 @@ def test_for_powerlaws():
 
 # Saving tabulate data
     print("Generating tables and plots.")
+    os.makedirs(os.path.join(config.DATA, "FitResults"), exist_ok=True)
     for species in tables:
         for state in tables[species]:
             tables[species][state].to_csv(os.path.join(config.DATA,

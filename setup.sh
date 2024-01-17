@@ -4,17 +4,15 @@
 # pminasandra.github.io
 # July 26, 2023
 #
-# USAGE: Run this script right after cloning to set up appropriate directories
-# as needed to produce the results in our paper.
+# Usage:
+# bash < (curl -sSf https://raw.githubusercontent.com/pminasandra/bout-duration-distributions/master/setup.sh)
 
-cpwd=$PWD
+mkdir bout-duration-distributions
+cd bout-duration-distributions
 
-cd dirname $0
-mkdir code/ 
-mv ./* code/
-mv ./.git code/.git
-mkdir Data/{,coati,hyena,meerkat} Figures/
+git clone https://github.com/pminasandra/bout-duration-distributions code
 
-cd $cpwd
+mkdir Data
+mkdir Figures
 
-exit 0 
+echo $PWD > code/cwd.txt

@@ -83,40 +83,58 @@ The following packages have to be installed separately:
 - `nolds` (for DFA)
 
 
-## Installation
+## Installation and setup
 
-Download the contents of this repository using 
+**NOTE**: On Linux and (possibly Mac), several below steps are automated by running the following command:
+
+```
+bash < (curl -sSf https://raw.githubusercontent.com/pminasandra/bout-duration-distributions/master/setup.sh)
+```
+
+If you have run the above command, skip straight to step 5.
+
+1. create a project directory at a location of your choice and enter it
+
+```
+mkdir /path/to/your/project
+cd /path/to/your/project
+```
+
+2. Download the contents of this repository using 
 
 `git clone https://github.com/pminasandra/bout-duration-distributions
-bout-duration-distributions`
+code`
 
-Then, enter the folder just cloned and run the setup.sh script:
+3. Also create the Data and Figures directories
 
 ```
-cd bout-duration-distributions/
-chmod +x setup.sh
-./setup.sh
+mkdir Data
+mkdir Figures
 ```
 
-In the Data/ directory, create directories for each species ('meerkat', 'coati',
-and 'hyena') that each contain behavior sequences for each individual of that
-species. Also create the directory 'FitResults' for storing data tables.
 
-In the code/ directory, create a file called 'cwd.txt' that, on the very first
-line, lists the path to the projectroot (the directory created above that now
-contains the 'code', 'Data', and 'Figures' subdirectories).
+4. In the code/ directory, create a file called 'cwd.txt' that, on the very first
+line, has the content `/path/to/your/project` 
+
+You can do this in linux-like command lines like this:
+```
+echo $PWD > code/cwd.txt
+```
+
+5. After this, copy any behaviour sequence data folders into the Data/ folder.
 
 # Usage
 
-Run all indicated python scripts using a terminal, with the command `python3
-<script_name>.py`
+Run all indicated python scripts using a terminal, with the command 
+`python3 <script_name>.py`
 
 Analyses are to be done as follows:
-Running `fitting.py` generates all bout duration
-distributions and generates tables containing AIC values. 
-Running `survival.py` creates plots with the hazard functions for all behaviours. 
-Running `persistence.py` performs DFA and mutual information decay analyses.
-Running `simulate.py` runs all simulations mentioned in the paper and its appendices.
+
+- Running `fitting.py` generates all bout duration
+    distributions and generates tables containing AIC values. 
+- Running `survival.py` creates plots with the hazard functions for all behaviours. 
+- Running `persistence.py` performs DFA and mutual information decay analyses.
+- Running `simulate.py` runs all simulations mentioned in the paper and its appendices.
 
 For academic colleagues, it is easy to re-work this code in your own analyses.
 Most functions also come with helpful docstrings, and the overall code structure
