@@ -3,13 +3,14 @@
 # Dec 25, 2022
 
 """
-This module provides the following generators to use for data retrieval from all three species.
+This module provides the following generators to use for data retrieval from all
+three species.
 """
 
 import datetime as dt
 import glob
 import os.path
-import warnings
+import random
 
 import pandas as pd
 
@@ -31,7 +32,6 @@ def as_bouts(dataframe, species, randomize=False):
     states = dataframe["state"].tolist()
 
     if randomize:
-        import random
         random.shuffle(states)
 
     current_state = "UNKNOWN"
@@ -80,14 +80,16 @@ def default_datagen_creator(species):
 
     def data_generator(randomize=False, extract_bouts=True):
         f"""
-        *GENERATOR* yields behavioural sequence data and metadata from {species}, individual-by-individual.
+        *GENERATOR* yields behavioural sequence data and metadata from {species},
+        individual-by-individual.
         Args:
             randomize (bool): whether to randomize data before extracting bouts.
         Yields:
             dict, where
                 dict["data"]: pd.DataFrame
                 dict["id"]: str, identifying information for the individual
-                dict["species"]: str, species of the individual whose data is in dict["data"]
+                dict["species"]: str, species of the individual whose data is in
+                                dict["data"]
         """
         if not extract_bouts:
             def postproc(*args, **kwargs):
@@ -119,14 +121,16 @@ generators = {
 
 def bouts_data_generator(randomize=False, extract_bouts=True):
     """
-    *GENERATOR* yields behavioural sequence data and metadata for all species, individual-by-individual,
+    *GENERATOR* yields behavioural sequence data and metadata for all species,
+    individual-by-individual,
     Args:
         randomize (bool): whether to randomize data before extracting bouts.
     Yields:
         dict, where
             dict["data"]: pd.DataFrame
             dict["id"]: str, identifying information for the individual
-            dict["species"]: str, species of the individual whose data is in dict["data"]
+            dict["species"]: str, species of the individual whose 
+                            data is in dict["data"]
     """
     for species in config.species:
         datasource = generators[species](randomize=randomize, extract_bouts=extract_bouts)
