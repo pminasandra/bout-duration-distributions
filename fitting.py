@@ -5,9 +5,8 @@
 """
 Provides methods for fitting data to powerlaw and other distributions.
 Mostly uses the module powerlaw.
-See: Alstott J, Bullmore E, Plenz D (2014) powerlaw: A Python Package for Analysis
-of Heavy-Tailed Distributions. PLoS ONE 9(1): e85777
-for more details
+See: Alstott J, Bullmore E, Plenz D (2014) powerlaw: A Python Package for
+Analysis of Heavy-Tailed Distributions. PLoS ONE 9(1): e85777 for more details
 """
 
 import os.path
@@ -31,7 +30,8 @@ insufficient_data_flag = config.insufficient_data_flag
 def preprocessing_df(dataframe, species):
     """
     Converts bouts to epoch units.
-    Ensures that the bouts of 1 epoch are removed, and any other preprocessing decided later.
+    Ensures that the bouts of 1 epoch are removed, and any other preprocessing
+    decided later.
     """
 
     df = dataframe.copy()
@@ -43,13 +43,16 @@ def preprocessing_df(dataframe, species):
 
 def states_summary(dataframe):
     """
-    Finds all the states and provides a basic quantitative summary of these states.
+    Finds all the states and provides a basic quantitative summary of these
+    states.
     Args:
-        dataframe (pandas.DataFrame): typically yielded by a boutparsing.bouts_data_generator()
+        dataframe (pandas.DataFrame): typically yielded by a
+        boutparsing.bouts_data_generator()
     Returns:
         dict, where
             dict["states"]: list of all states whose bouts are in states summary
-            dict["proportions"]: proportion of time the individual was in each state
+            dict["proportions"]: proportion of time the individual was in each
+            state
     """
 
     states = list(dataframe["state"].unique())
@@ -78,12 +81,13 @@ def statewise_bouts(dataframe):
         statewise_bouts[state] = dataframe[dataframe["state"] == state].copy()
 
     return statewise_bouts
-    
+ 
 def fits_to_all_states(dataframe, *args, **kwargs):
     """
     Performs powerlaw.Fit for all states separately
     Args:
-        dataframe (pandas.DataFrame): typically yielded by a boutparsing.bouts_data_generator()
+        dataframe (pandas.DataFrame): typically yielded by a
+        boutparsing.bouts_data_generator()
         args, kwargs: passed on to powerlaw.Fit(...); 
             (see Alstott J, Bullmore E, Plenz D (2014) powerlaw:
             A Python Package for Analysis of Heavy-Tailed Distributions. 
@@ -103,7 +107,8 @@ def fits_to_all_states(dataframe, *args, **kwargs):
             warnings.warn(f"W: insufficient data for state {state}")
             fit = config.insufficient_data_flag
         else:
-            fit = pl.Fit(durations, *args, discrete=config.discrete, xmin=config.xmin, **kwargs)
+            fit = pl.Fit(durations, *args, discrete=config.discrete,
+                xmin=config.xmin, **kwargs)
 
         fitted_distributions[state] = fit
 
@@ -111,25 +116,31 @@ def fits_to_all_states(dataframe, *args, **kwargs):
 
 
 def aic(distribution, data):
-    if type(distribution).__name__ in ['Lognormal', 'Truncated_Power_Law', 'Stretched_Exponential']:
+    """
+    Computes Akaike Information Criteria for a distribution with a dataset
+    """
+
+    if type(distribution).__name__ in ['Lognormal', 'Truncated_Power_Law',
+                                        'Stretched_Exponential']:
         params = 2
     elif type(distribution).__name__ in ['Exponential', 'Power_Law']:
         params = 1
     else:
-        raise ValueError(f"fitting.aic() has not been programmed for distribution: {distribution}")
+        raise ValueError(f"fitting.aic() has not been programmed for\
+                            distribution: {distribution}")
 
     return 2*(params - sum(np.array(distribution.loglikelihoods(data))))
 
 def compare_candidate_distributions(fit, data):
     """
-    Computes \delta-AICs for all candidate distributions.
+    Computes delta-AICs for all candidate distributions.
     Args:
         fit (powerlaw.Fit): a fit of bout durations.
         data (list like): the data which was used to fit this distribution.
         args, kwargs: passed on to powerlaw.Fit()
     Returns:
         list: names (str) of distributions
-        list: containing \delta-AIC values
+        list: containing delta-AIC values
     """
 
     if fit != insufficient_data_flag:
@@ -146,10 +157,10 @@ def compare_candidate_distributions(fit, data):
 
         for candidate_name in candidates:
             AICs[candidate_name] -= min_AIC
-            dAICs[candidate_name] =[AICs[candidate_name]] 
+            dAICs[candidate_name] =[AICs[candidate_name]]
     else:
         dAICs = {}
-        for candidate_name in config.distributions_to_numbers.keys():
+        for candidate_name in config.distributions_to_numbers:
             dAICs[candidate_name] = [config.insufficient_data_flag]
 
     return pd.DataFrame(dAICs)
@@ -177,8 +188,8 @@ def choose_best_distribution(fit, data):
                 min_AIC = AIC
                 best_fit = candidate_name
         return best_fit, candidates[best_fit]
-    else:
-        return config.insufficient_data_flag, config.insufficient_data_flag
+    #otherwise:
+    return config.insufficient_data_flag, config.insufficient_data_flag
 
 
 def print_distribution(dist):
@@ -189,8 +200,13 @@ def print_distribution(dist):
     if dist == config.insufficient_data_flag:
         return config.insufficient_data_flag
 
-    if type(dist) not in [pl.Exponential, pl.Power_Law, pl.Truncated_Power_Law, pl.Lognormal, pl.Stretched_Exponential]:
+    if type(dist) not in [pl.Exponential,
+                            pl.Power_Law,
+                            pl.Truncated_Power_Law,
+                            pl.Lognormal,
+                            pl.Stretched_Exponential]:
         raise ValueError(f"Unknown distribution type: {type(dist)}")
+        return None
 
     if type(dist) == pl.Exponential:
         return f"Exponential(λ={dist.Lambda})"
@@ -205,7 +221,8 @@ def print_distribution(dist):
 
 def plot_data_and_fits(fits, state, fig, ax, plot_fits=False, **kwargs):
     """
-    Plots cumulative complementary distribution function of data and fitted distributions
+    Plots cumulative complementary distribution function of data and fitted
+    distributions
     Args:
         fits (dict of powerlaw.Fit): typically from fits_to_all_states().
         state (str): behavioural state.
@@ -226,11 +243,14 @@ def plot_data_and_fits(fits, state, fig, ax, plot_fits=False, **kwargs):
 
         for candidate_name in candidate_dists:
             candidate = candidate_dists[candidate_name]
-            candidate.plot_ccdf(ax = ax, color=config.colors[candidate_name], linestyle=config.fit_line_style, linewidth=0.5, label=candidate_name)
+            candidate.plot_ccdf(ax = ax, color=config.colors[candidate_name],
+                                    linestyle=config.fit_line_style,
+                                    linewidth=0.5,
+                                    label=candidate_name)
 
         return fig, ax
-    else:
-        return fig, ax
+    #otherwise:
+    return fig, ax
 
 
 def test_for_powerlaws():
@@ -249,12 +269,16 @@ def test_for_powerlaws():
 
     print("Initialised distribution fitting sequence.")
     for databundle in bdg:
+
+# Data loading
         print("Processing ", databundle["species"], databundle["id"] + ".")
         data = databundle["data"]
         species_ = databundle["species"]
-        
+ 
+# Preprocessing
         data = preprocessing_df(data, species_)
 
+# Fitting
         fits = fits_to_all_states(data, verbose=False)
         states = states_summary(data)["states"]
 
@@ -265,25 +289,40 @@ def test_for_powerlaws():
 
         for state in states:
             if state not in tables[species_]:
-                tables[species_][state] = pd.DataFrame(columns=["id", "Exponential", "Lognormal", "Power_Law", "Truncated_Power_Law", "Stretched_Exponential", "best_fit"])
+                tables[species_][state] = pd.DataFrame(
+                    columns=["id", "Exponential", "Lognormal",
+                                "Power_Law", "Truncated_Power_Law",
+                                "Stretched_Exponential", "best_fit"])
             if state not in plots[species_]:
                 plots[species_][state] = plt.subplots()
 
-            table = compare_candidate_distributions(fits[state], data["duration"])
+# Determining best fits
+            table = compare_candidate_distributions(fits[state],
+                                                    data["duration"])
             table["id"] = databundle["id"]
-            _, best_dist = choose_best_distribution(fits[state], data["duration"])
+            _, best_dist = choose_best_distribution(fits[state],
+                                    data["duration"])
             table["best_fit"] = print_distribution(best_dist)
             tables[species_][state] = pd.concat([tables[species_][state], table])
 
+# Generating figures
             fig, ax = plots[species_][state]
-            plots[species_][state] = plot_data_and_fits(fits, state, fig, ax, plot_fits=False, color="darkred", alpha=0.3)
+            plots[species_][state] = plot_data_and_fits(fits, state, fig, ax,
+                                                        plot_fits=False,
+                                                        color="darkred",
+                                                        alpha=0.3)
 
 
+# Saving tabulate data
     print("Generating tables and plots.")
     for species in tables:
         for state in tables[species]:
-            tables[species][state].to_csv(os.path.join(config.DATA, "FitResults", species, state + ".csv"), index=False)
+            tables[species][state].to_csv(os.path.join(config.DATA,
+                                                    "FitResults", species,
+                                                    state + ".csv"),
+                                                index=False)
 
+# Saving figures
     for species in plots:
         for state in plots[species]:
             fig, ax = plots[species][state]
@@ -296,6 +335,7 @@ def test_for_powerlaws():
             ax.set_title(f"Species: {species.title()} | State: {state.title()}")
             utilities.saveimg(fig, f"Distribution-fits-{species}-{state}")
 
+# Done
     print("Distribution fitting completed.")
 
 if __name__ == "__main__":
