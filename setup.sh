@@ -5,7 +5,7 @@
 # July 26, 2023
 #
 # Usage:
-# bash < (curl -sSf https://raw.githubusercontent.com/pminasandra/bout-duration-distributions/master/setup.sh)
+# curl -sSf https://raw.githubusercontent.com/pminasandra/bout-duration-distributions/master/setup.sh | bash
 
 mkdir bout-duration-distributions
 cd bout-duration-distributions

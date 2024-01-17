@@ -88,7 +88,8 @@ The following packages have to be installed separately:
 **NOTE**: On Linux and (possibly Mac), several below steps are automated by running the following command:
 
 ```
-bash < (curl -sSf https://raw.githubusercontent.com/pminasandra/bout-duration-distributions/master/setup.sh)
+curl -sSf
+https://raw.githubusercontent.com/pminasandra/bout-duration-distributions/master/setup.sh | bash
 ```
 
 If you have run the above command, skip straight to step 5.
