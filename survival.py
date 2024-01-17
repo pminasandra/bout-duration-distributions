@@ -3,12 +3,11 @@
 # Dec 29, 2022
 
 """
-This module provides the function compute_behavioural_inertia, which computes the complement of the hazard function
-based on a given dataset and state. It also includes the wrapper function generate_behavioural_inertia_plots(),
-which does this analysis on all species, individuals, and behavioural states. 
+This module provides the function compute_behavioural_inertia, which computes
+the complement of the hazard function based on a given dataset and state. It
+also includes the wrapper function generate_behavioural_inertia_plots(), which
+does this analysis on all species, individuals, and behavioural states. 
 """
-
-import os.path
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -25,27 +24,28 @@ if not config.SUPPRESS_INFORMATIVE_PRINT:
 # NOTE: The below function has an argument, hazard_rate, that defaults to False.
 # Initially, we thought 1 - Hazard was a better pitch for the paper. However,
 # since, the paper has switched to hazard rate in totality. Make sure to always
-# turn hazard_rate to False whenever using this function.
+# turn hazard_rate to True whenever using this function.
 def compute_behavioural_inertia(dataframe, species, state, hazard_rate=False):
     """
     Computes behavioural inertia (see docs) for a given dataset.
     Args:
-        dataframe (pd.DataFrame): bout information, typically output from boutparsing.bouts_data_generator(...).
+        dataframe (pd.DataFrame): bout information, typically output from
+            boutparsing.bouts_data_generator(...).
         species (str): name of species from which the data come.
         state (str): name of the behavioural state.
-        hazard_rate (bool): default False, whether to plot hazard rate instead of behavioural inertia
+        hazard_rate (bool): default False, whether to plot hazard rate
+                            instead of behavioural inertia
     Returns:
         np.array (two column): time and inertia values
    """
-    xmin = config.xmin
-    epoch = classifier_info.classifiers_info[species].epoch
 
     dataframe = fitting.preprocessing_df(dataframe, species)
     dataframe = dataframe[dataframe["state"] == state]
 
     unique_values = dataframe["duration"].unique()
     unique_values.sort()
-    unique_values = unique_values[:-1] #Excluding the biggest bout because it contributes nothing here
+    unique_values = unique_values[:-1] # Excluding the biggest bout because
+                                       # it contributes nothing here
     if config.survival_exclude_last_few_points:
         if len(dataframe["duration"]) < config.survival_num_points_to_exclude:
             return "invalid" # sort of hacky, unfortunately :(
@@ -59,7 +59,7 @@ def compute_behavioural_inertia(dataframe, species, state, hazard_rate=False):
     for t in unique_values:
         BI_main = dataframe[dataframe["duration"] > t]
         BI_denom = BI_main["duration"].count()
-        BI_sub = dataframe[dataframe["duration"] > (t + 1.0)] 
+        BI_sub = dataframe[dataframe["duration"] > (t + 1.0)]
         BI_numer = BI_sub["duration"].count()
 
         ts.append(t)
@@ -71,13 +71,19 @@ def compute_behavioural_inertia(dataframe, species, state, hazard_rate=False):
     table = np.array([ts, BIs]).T
     return table
 
+
 def generate_behavioural_inertia_plots(add_randomized=False, hazard_rate=False):
     """
-    Generates behavioural inertia vs time plots for all states, individuals, species.
+    Generates behavioural inertia vs time plots for all states, individuals,
+    species.
     Args:
-        add_randomized (bool): default False, whether to also add same plots with shuffling of data
-        hazard_rate (bool): default False, whether to plot hazard rate instead of behavioural inertia
+        add_randomized (bool): default False, whether to also add same
+                                plots with shuffling of data
+        hazard_rate (bool): default False, whether to plot hazard rate instead
+                                of behavioural inertia
     """
+
+# Load data
     print("Behavioural inertia plot generation initiated.")
     bdg = boutparsing.bouts_data_generator()
     if add_randomized:
@@ -90,6 +96,7 @@ def generate_behavioural_inertia_plots(add_randomized=False, hazard_rate=False):
         data = databundle["data"]
         print(f"Working on {species_} {id_}.")
 
+# Generate empty figure
         if species_ not in plots:
             plots[species_] = {}
 
@@ -99,15 +106,24 @@ def generate_behavioural_inertia_plots(add_randomized=False, hazard_rate=False):
             if state not in plots[species_]:
                 plots[species_][state] = plt.subplots()
 
-            survival_table = compute_behavioural_inertia(data, species_, state, hazard_rate=hazard_rate)
+# Compute hazard rates
+            survival_table = compute_behavioural_inertia(data, species_, state,
+                                                        hazard_rate=hazard_rate)
             if isinstance(survival_table, str):
                 if survival_table == "invalid":
                     continue
+
+# Make plot
             fig, ax = plots[species_][state]
-            ax.step(survival_table[:,0], survival_table[:,1], color=config.survival_plot_color, linewidth=0.75, alpha=0.4)
+            ax.step(survival_table[:,0], survival_table[:,1],
+                        color=config.survival_plot_color,
+                        linewidth=0.75,
+                        alpha=0.4
+                    )
             ax.set_xscale(config.survival_xscale)
             ax.set_yscale(config.survival_yscale)
 
+# if add_randomizesd: Also shuffle the data and repeat
     if add_randomized:
         for databundle in bdg_r:
             species_ = databundle["species"]
@@ -124,10 +140,17 @@ def generate_behavioural_inertia_plots(add_randomized=False, hazard_rate=False):
                 if state not in plots[species_]:
                     plots[species_][state] = plt.subplots()
 
-                survival_table = compute_behavioural_inertia(data, species_, state, hazard_rate=hazard_rate)
+                survival_table = compute_behavioural_inertia(data, species_,
+                                                        state,
+                                                        hazard_rate=hazard_rate)
                 fig, ax = plots[species_][state]
-                ax.step(survival_table[:,0], survival_table[:,1], color=config.survival_randomization_plot_color, linewidth=0.75, alpha=0.4)
+                ax.step(survival_table[:,0], survival_table[:,1],
+                            color=config.survival_randomization_plot_color,
+                            linewidth=0.75,
+                            alpha=0.4
+                        )
 
+# Saving all plots
     print("Data analysis completed, saving plots.")
     for species in plots:
         epoch = classifier_info.classifiers_info[species].epoch
@@ -149,9 +172,8 @@ def generate_behavioural_inertia_plots(add_randomized=False, hazard_rate=False):
                 ax.set_ylabel("Behavioural Inertia")
                 utilities.saveimg(fig, f"Behavioural-Inertia-{species}-{state}")
 
-
-
     print("Behavioural inertia plot generation finished.")
+# Done
 
 if __name__ == "__main__":
     generate_behavioural_inertia_plots(add_randomized=False, hazard_rate=True)
