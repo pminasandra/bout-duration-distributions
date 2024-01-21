@@ -297,11 +297,12 @@ def test_for_powerlaws():
                 plots[species_][state] = plt.subplots()
 
 # Determining best fits
+            data_subset = data[data["state"] == state]
             table = compare_candidate_distributions(fits[state],
-                                                    data["duration"])
+                                                    data_subset["duration"])
             table["id"] = databundle["id"]
             _, best_dist = choose_best_distribution(fits[state],
-                                    data["duration"])
+                                    data_subset["duration"])
             table["best_fit"] = print_distribution(best_dist)
             tables[species_][state] = pd.concat([tables[species_][state], table])
 
