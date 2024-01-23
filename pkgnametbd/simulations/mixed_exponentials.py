@@ -7,8 +7,8 @@ import random as random
 import numpy as np
 import powerlaw as pl
 
-import config
-import utilities
+from pkgnametbd import config
+from pkgnametbd import utilities
 
 if not config.SUPPRESS_INFORMATIVE_PRINT:
     print = utilities.sprint

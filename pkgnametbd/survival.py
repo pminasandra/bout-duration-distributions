@@ -12,11 +12,11 @@ does this analysis on all species, individuals, and behavioural states.
 import matplotlib.pyplot as plt
 import numpy as np
 
-import boutparsing
-import config
-import classifier_info
-import fitting
-import utilities
+from pkgnametbd import boutparsing
+from pkgnametbd import config
+from pkgnametbd import classifier_info
+from pkgnametbd import fitting
+from pkgnametbd import utilities
 
 if not config.SUPPRESS_INFORMATIVE_PRINT:
     print = utilities.sprint

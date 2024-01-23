@@ -7,19 +7,19 @@ import os.path
 import numpy as np
 from scipy.special import ndtri
 
-import config
-import utilities
+from pkgnametbd import config
+from pkgnametbd import utilities
 
-import simulations.sconfig
+from . import sconfig
 
 # The following if block is necessary because scipy.special.ndtri() is a low level
 # function several hundred times faster than scipy.stats.norm.ppf()
-if simulations.sconfig.FEATURE_DIST_VARIANCE == 1.0:
+if sconfig.FEATURE_DIST_VARIANCE == 1.0:
     inv_normal_cdf = ndtri
 else:
     import scipy.stats.norm
     def inv_normal_cdf(y):
-        return scipy.stats.norm.ppf(y, scale=simulations.sconfig.FEATURE_DIST_VARIANCE)
+        return scipy.stats.norm.ppf(y, scale=sconfig.FEATURE_DIST_VARIANCE)
 
 def parameter_values(error_start, error_end, error_num):
     """

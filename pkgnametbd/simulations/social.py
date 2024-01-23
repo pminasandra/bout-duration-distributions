@@ -13,10 +13,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-import survival
+from pkgnametbd import survival
 
-from simulations.agentpool import AgentPool
-from simulations.agentpoolutils import recs_as_pd_dataframes
+from agentpool import AgentPool
+from agentpoolutils import recs_as_pd_dataframes
 
 def _lin_between(p_begin, p_end, num):
     p_begin = float(p_begin)

@@ -11,10 +11,10 @@ import os.path
 import pandas as pd
 import numpy as np
 
-import config
-import utilities
+from pkgnametbd import config
+from pkgnametbd import utilities
 
-import simulations.sconfig
+from . import sconfig
 
 if not config.SUPPRESS_INFORMATIVE_PRINT:
     print = utilities.sprint
@@ -81,11 +81,11 @@ class Simulator:
 
         current_time = 0
         i = 0
-        while i < num_bouts and current_time < simulations.sconfig.MAX_REC_TIME:
+        while i < num_bouts and current_time < sconfig.MAX_REC_TIME:
             current_state = states[i % 2]
             current_bout = int(bout_values[current_state][i])
-            if current_time + current_bout > simulations.sconfig.MAX_REC_TIME:
-                current_bout = simulations.sconfig.MAX_REC_TIME - current_time
+            if current_time + current_bout > sconfig.MAX_REC_TIME:
+                current_bout = sconfig.MAX_REC_TIME - current_time
 
             if not self.multiple_features:
                 mean, stdev = self.ft_params[current_state]
@@ -135,9 +135,9 @@ if __name__ == "__main__":
     plt.eventplot(ft_A["datetime"], lineoffsets=2.5, linelengths=0.25, color="red", alpha=0.3)
     plt.eventplot(ft_B["datetime"], lineoffsets=2.5, linelengths=0.25, color="blue", alpha=0.3)
 
-    import simulations.classifier
+    import classifier
 
-    classifications = simulations.classifier.bayes_classify(simulator.records["feature0"])
+    classifications = classifier.bayes_classify(simulator.records["feature0"])
     df2 = pd.DataFrame({"datetime":records.datetime, "state":classifications})
     ft_A = df2[classifications == "A"]
     ft_B = df2[classifications == "B"]

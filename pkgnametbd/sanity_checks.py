@@ -10,10 +10,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-import boutparsing
-import fitting
-import config
-import utilities
+from pkgnametbd import boutparsing
+from pkgnametbd import fitting
+from pkgnametbd import config
+from pkgnametbd import utilities
 
 old_print = print
 if not config.SUPPRESS_INFORMATIVE_PRINT:

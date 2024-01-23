@@ -10,16 +10,16 @@ import numpy as np
 import pandas as pd
 import powerlaw as pl
 
-import config
-import boutparsing
-import fitting
-import utilities
+from pkgnametbd import config
+from pkgnametbd import boutparsing
+from pkgnametbd import fitting
+from pkgnametbd import utilities
 
-import simulations.sconfig
-import simulations.classifier
-import simulations.parameter_space
-from simulations.simulator import Simulator
-import simulations.mixed_exponentials
+from . import sconfig
+from . import classifier
+from . import parameter_space
+from .simulator import Simulator
+from . import mixed_exponentials
 
 if not config.SUPPRESS_INFORMATIVE_PRINT:
     old_print = print
@@ -30,7 +30,7 @@ def _simulate_and_get_results(sim_count, ft_params, bd_distributions, epoch, fit
 
     np.random.seed()
     simulator = Simulator(bd_distributions, ft_params, epoch)
-    simulator.run(simulations.sconfig.NUM_BOUTS)
+    simulator.run(sconfig.NUM_BOUTS)
     simulator.records["datetime"] = pd.to_datetime(simulator.records["datetime"], unit='s')
 
     assert simulator.num_features > 1
@@ -41,7 +41,7 @@ def _simulate_and_get_results(sim_count, ft_params, bd_distributions, epoch, fit
 
     for i in range(simulator.num_features):
         print(sim_count, ":", i)
-        classifications = simulations.classifier.bayes_classify(simulator.records[f"feature{i}"])
+        classifications = classifier.bayes_classify(simulator.records[f"feature{i}"])
         recs = simulator.records.copy()
         recs = recs[["datetime", "state"]]
         recs["state"] = classifications
@@ -88,13 +88,13 @@ def _helper_func_for_specific_case(ft_params, bd_distributions, epoch, fig, ax):
         print(i)
         np.random.seed()
         simulator = Simulator(bd_distributions, ft_params, epoch)
-        simulator.run(simulations.sconfig.NUM_BOUTS)
+        simulator.run(sconfig.NUM_BOUTS)
         simulator.records["datetime"] = pd.to_datetime(simulator.records["datetime"], unit='s')
 
         actual_bouts = boutparsing.as_bouts(simulator.records[["datetime", "state"]], "meerkat")
         actual_bouts = actual_bouts[actual_bouts["duration"] >= config.xmin] 
 
-        classifications = simulations.classifier.bayes_classify(simulator.records[f"feature5"])
+        classifications = classifier.bayes_classify(simulator.records[f"feature5"])
         recs = simulator.records.copy()
         recs = recs[["datetime", "state"]]
         recs["state"] = classifications
@@ -128,28 +128,28 @@ def generate_illustration_at_crucial_error():
     This is useful for a figure in our paper, but is not generally
     applicable at this stage.
     """
-    parameter_space = simulations.parameter_space.parameter_values(
-        simulations.sconfig.ERRORS_PARAMETER_SPACE_BEGIN,
-        simulations.sconfig.ERRORS_PARAMETER_SPACE_END,
-        simulations.sconfig.ERRORS_PARAMETER_SPACE_NUM
+    parameter_space = parameter_space.parameter_values(
+        sconfig.ERRORS_PARAMETER_SPACE_BEGIN,
+        sconfig.ERRORS_PARAMETER_SPACE_END,
+        sconfig.ERRORS_PARAMETER_SPACE_NUM
     )
 
     bd_distributions = {
-        'A': pl.Exponential(xmin = config.xmin, parameters=[simulations.sconfig.EXPONENTIAL_LAMBDA], discrete=config.discrete),
-        'B': pl.Exponential(xmin = config.xmin, parameters=[simulations.sconfig.EXPONENTIAL_LAMBDA], discrete=config.discrete)   
+        'A': pl.Exponential(xmin = config.xmin, parameters=[sconfig.EXPONENTIAL_LAMBDA], discrete=config.discrete),
+        'B': pl.Exponential(xmin = config.xmin, parameters=[sconfig.EXPONENTIAL_LAMBDA], discrete=config.discrete)   
     }
 
     epoch = 1.0
     ft_params = [{
-        "A": (mean_a, simulations.sconfig.FEATURE_DIST_VARIANCE),
-        "B": (mean_b, simulations.sconfig.FEATURE_DIST_VARIANCE)}
+        "A": (mean_a, sconfig.FEATURE_DIST_VARIANCE),
+        "B": (mean_b, sconfig.FEATURE_DIST_VARIANCE)}
         for (mean_a, mean_b) in parameter_space]
 
     vals = ft_params[5] # spurious detection of exponential as tpl
 
     fig, ax = plt.subplots()
     _helper_func_for_specific_case(ft_params, bd_distributions, epoch, fig, ax)
-    utilities.saveimg(fig, "simulations_illustration_max_ht")
+    utilities.saveimg(fig, "illustration_max_ht")
     plt.show()
 
 def simulate_with_distribution(distribution_name):
@@ -158,23 +158,23 @@ def simulate_with_distribution(distribution_name):
     prone classifiers, and performs fits on the resulting data.
     """
 
-    parameter_space = simulations.parameter_space.parameter_values(
-        simulations.sconfig.ERRORS_PARAMETER_SPACE_BEGIN,
-        simulations.sconfig.ERRORS_PARAMETER_SPACE_END,
-        simulations.sconfig.ERRORS_PARAMETER_SPACE_NUM
+    parameter_space = parameter_space.parameter_values(
+        sconfig.ERRORS_PARAMETER_SPACE_BEGIN,
+        sconfig.ERRORS_PARAMETER_SPACE_END,
+        sconfig.ERRORS_PARAMETER_SPACE_NUM
     )
 
     
     if distribution_name == "Power_Law":
         bd_distributions = {
-            'A': pl.Power_Law(xmin = config.xmin, parameters=[simulations.sconfig.POWER_LAW_ALPHA], discrete=config.discrete),
-            'B': pl.Power_Law(xmin = config.xmin, parameters=[simulations.sconfig.POWER_LAW_ALPHA], discrete=config.discrete)   
+            'A': pl.Power_Law(xmin = config.xmin, parameters=[sconfig.POWER_LAW_ALPHA], discrete=config.discrete),
+            'B': pl.Power_Law(xmin = config.xmin, parameters=[sconfig.POWER_LAW_ALPHA], discrete=config.discrete)   
         }
 
     elif distribution_name == "Exponential":
         bd_distributions = {
-            'A': pl.Exponential(xmin = config.xmin, parameters=[simulations.sconfig.EXPONENTIAL_LAMBDA], discrete=config.discrete),
-            'B': pl.Exponential(xmin = config.xmin, parameters=[simulations.sconfig.EXPONENTIAL_LAMBDA], discrete=config.discrete)   
+            'A': pl.Exponential(xmin = config.xmin, parameters=[sconfig.EXPONENTIAL_LAMBDA], discrete=config.discrete),
+            'B': pl.Exponential(xmin = config.xmin, parameters=[sconfig.EXPONENTIAL_LAMBDA], discrete=config.discrete)   
         }
     
     epoch = 1.0
@@ -183,8 +183,8 @@ def simulate_with_distribution(distribution_name):
     fit_results_spec = manager.list()
 
     ft_params = [{
-        "A": (mean_a, simulations.sconfig.FEATURE_DIST_VARIANCE),
-        "B": (mean_b, simulations.sconfig.FEATURE_DIST_VARIANCE)}
+        "A": (mean_a, sconfig.FEATURE_DIST_VARIANCE),
+        "B": (mean_b, sconfig.FEATURE_DIST_VARIANCE)}
         for (mean_a, mean_b) in parameter_space]
 
 
@@ -206,10 +206,10 @@ def simulate_with_distribution(distribution_name):
 
 def _multiprocessing_helper_func(p, expl0, expl1, count, tgtlist, num_sims):
     np.random.seed()
-    dist = simulations.mixed_exponentials.MixedExponential(p, expl0, expl1)
-    vals = dist.generate_random(simulations.sconfig.NUM_BOUTS)
+    dist = mixed_exponentials.MixedExponential(p, expl0, expl1)
+    vals = dist.generate_random(sconfig.NUM_BOUTS)
 
-    bouts_df = pd.DataFrame({"state":["A"]*simulations.sconfig.NUM_BOUTS, "duration":vals})
+    bouts_df = pd.DataFrame({"state":["A"]*sconfig.NUM_BOUTS, "duration":vals})
 
     pred_fits = fitting.fits_to_all_states(bouts_df)
 

@@ -130,11 +130,11 @@ Run all indicated python scripts using a terminal, with the command
 
 Analyses are to be done as follows:
 
-- Running `fitting.py` generates all bout duration
+- Running `python code/pkgnametbd/fitting.py` generates all bout duration
     distributions and generates tables containing AIC values. 
-- Running `survival.py` creates plots with the hazard functions for all behaviours. 
-- Running `persistence.py` performs DFA and mutual information decay analyses.
-- Running `simulate.py` runs all simulations mentioned in the paper and its appendices.
+- Running `python code/pkgnametbd/survival.py` creates plots with the hazard functions for all behaviours. 
+- Running `python code/pkgnametbd/persistence.py` performs DFA and mutual information decay analyses.
+- Running `python code/pkgnametbd/simulate.py` runs all simulations mentioned in the paper and its appendices.
 
 For academic colleagues, it is easy to re-work this code in your own analyses.
 Most functions also come with helpful docstrings, and the overall code structure

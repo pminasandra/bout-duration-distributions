@@ -11,8 +11,8 @@ import numpy as np
 import pandas as pd
 import scipy.stats
 
-import config
-import utilities
+from pkgnametbd import config
+from pkgnametbd import utilities
 
 if not config.SUPPRESS_INFORMATIVE_PRINT:
     print = utilities.sprint

@@ -21,10 +21,10 @@ import numpy as np
 import config
 import utilities
 
-import simulations
-import simulations.parameter_space
-import simulations.sconfig
-import simulations.social
+from pkgnametbd import simulations
+from pkgnametbd import simulations.parameter_space
+from pkgnametbd import simulations.sconfig
+from pkgnametbd import simulations.social
 
 if not config.SUPPRESS_INFORMATIVE_PRINT:
     print = utilities.sprint

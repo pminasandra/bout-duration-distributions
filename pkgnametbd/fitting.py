@@ -17,10 +17,10 @@ import numpy as np
 import pandas as pd
 import powerlaw as pl
 
-import config
-import classifier_info
-import boutparsing
-import utilities
+from pkgnametbd import config
+from pkgnametbd import classifier_info
+from pkgnametbd import boutparsing
+from pkgnametbd import utilities
 
 if not config.SUPPRESS_INFORMATIVE_PRINT:
     print = utilities.sprint
