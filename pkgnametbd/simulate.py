@@ -1,3 +1,5 @@
+#! /usr/bin/env python 
+
 # Pranav Minasandra
 # pminasandra.github.io
 # been a while, forgot the day. couple weeks before 24 Sep 2023
@@ -38,15 +40,25 @@ simulations.simulate_with_distribution("Power_Law")
 
 fig, ax = plt.subplots()
 
+# > BROCK OPT
+# Probably this should go above the simulations and get
+# passed throught to parameter_space.py to ensure
+# that axis settings are in sync with how data was generated
+# <
 error_rates = np.linspace(
     simulations.sconfig.ERRORS_PARAMETER_SPACE_BEGIN,
     simulations.sconfig.ERRORS_PARAMETER_SPACE_END,
     simulations.sconfig.ERRORS_PARAMETER_SPACE_NUM
 )/2
 
+# > BROCK OPT
+# could be more DRY...
+# for dist in ["Exponential", "Power Law"]:
+# <
+
 heavy_tails_exp = np.loadtxt(os.path.join(config.DATA, "simulation_Exponential_heavy_tails.npout"))
 
-ht_rates = heavy_tails_exp.mean(axis=0)
+ht_rates = heavy_tails_exp.mean(axis=0) #BROCK TODO: doublecheck this
 print(error_rates)
 print(ht_rates)
 ax.plot(error_rates, ht_rates, label="Exponential")
@@ -64,6 +76,12 @@ ax.set_xlabel("Classifier error")
 ax.set_ylabel("Proportion of results with heavy-tail best fits")
 
 ax.legend(title="True bout duration distribution")
+
+# BROCK REQ >
+# It doesn't seem like you are plotting or outputting 
+# anywhere a summary of the findings re: scale-free rate,
+# but I think that is referenced in the paper.
+# <
 utilities.saveimg(fig, "simulation_classification_effect")
 
 # BLOCK 2: why strange stuff happens at error = 0.25
