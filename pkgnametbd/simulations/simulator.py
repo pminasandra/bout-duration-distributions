@@ -18,6 +18,15 @@ from . import sconfig
 
 if not config.SUPPRESS_INFORMATIVE_PRINT:
     print = utilities.sprint
+    
+# BROCK OPT >
+# Since this object has only one method and you are only running that 
+# method once per instantiation, making this an object/class doens't seem to
+# be adding much over a simple function that returns records.
+#
+# In fact, it's a bit counterintuitive (to me at least) that run() merely sets
+# s.records and does not return anything.
+# <
 
 class Simulator:
     """
@@ -49,8 +58,23 @@ class Simulator:
             for ft_needed in ft_params:
                 assert type(ft_needed) == dict
             self.multiple_features = True
+            # BROCK OPT >
+            # This attribute is a bit of a misnomer in that
+            # if you a list with one element
+            # then multiple features will be set to true when, in fact
+            # there is only one feature.
+            #
+            # It appears that both cases are still handled correctly.
+            # Seems to add unecessary complexity though to accept 
+            # either a list of objects or the object itself.
+            #
+            # Why not just force the caller to put their one element inside a list?
+            # <
             self.num_features = len(ft_params)
 
+        # BROCK OPT >
+        # Since you only handle two states, you may want to assert
+        # len(bd_distributions) = True
         for state in bd_distributions:
             assert bd_distributions[state].generate_random
 
