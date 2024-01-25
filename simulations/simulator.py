@@ -83,7 +83,7 @@ class Simulator:
         i = 0
         while i < num_bouts and current_time < simulations.sconfig.MAX_REC_TIME:
             current_state = states[i % 2]
-            current_bout = int(bout_values[state][i])
+            current_bout = int(bout_values[current_state][i])
             if current_time + current_bout > simulations.sconfig.MAX_REC_TIME:
                 current_bout = simulations.sconfig.MAX_REC_TIME - current_time
 
