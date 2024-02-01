@@ -1,3 +1,5 @@
+#! /usr/bin/env python 
+
 # Pranav Minasandra
 # pminasandra.github.io
 # Sep 27, 2023
@@ -23,11 +25,11 @@ import pandas as pd
 from sklearn.metrics import adjusted_mutual_info_score, r2_score
 import scipy.optimize
 
-import boutparsing
-import config
-import classifier_info
-import fitting
-import utilities
+from pkgnametbd import boutparsing
+from pkgnametbd import config
+from pkgnametbd import classifier_info
+from pkgnametbd import fitting
+from pkgnametbd import utilities
 
 if not config.SUPPRESS_INFORMATIVE_PRINT:
     print = utilities.sprint

@@ -10,27 +10,34 @@ import numpy as np
 import pandas as pd
 import powerlaw as pl
 
-import config
-import boutparsing
-import fitting
-import utilities
+from pkgnametbd import config
+from pkgnametbd import boutparsing
+from pkgnametbd import fitting
+from pkgnametbd import utilities
 
-import simulations.sconfig
-import simulations.classifier
-import simulations.parameter_space
-from simulations.simulator import Simulator
-import simulations.mixed_exponentials
+from . import sconfig
+from . import classifier
+from . import parameter_space
+from .simulator import Simulator
+from . import mixed_exponentials
 
+# > BROCK OPT
+# Why not use a logger?
+# < 
 if not config.SUPPRESS_INFORMATIVE_PRINT:
     old_print = print
     print = utilities.sprint
 
+# > BROCK OPT
+# Seems like the arg "sim_count" is more like sim id or sim index
+# count sounds like a total or a sum
+# <
 # The below function will be run in parallel many times
 def _simulate_and_get_results(sim_count, ft_params, bd_distributions, epoch, fit_results, fit_results_spec):
 
     np.random.seed()
     simulator = Simulator(bd_distributions, ft_params, epoch)
-    simulator.run(simulations.sconfig.NUM_BOUTS)
+    simulator.run(sconfig.NUM_BOUTS)
     simulator.records["datetime"] = pd.to_datetime(simulator.records["datetime"], unit='s')
 
     assert simulator.num_features > 1
@@ -41,11 +48,22 @@ def _simulate_and_get_results(sim_count, ft_params, bd_distributions, epoch, fit
 
     for i in range(simulator.num_features):
         print(sim_count, ":", i)
-        classifications = simulations.classifier.bayes_classify(simulator.records[f"feature{i}"])
+        classifications = classifier.bayes_classify(simulator.records[f"feature{i}"])
+        # BROCK OPT >
+        # It looks like you are copying a datatable here and then throwing away 
+        # all except one column of it. There is probably a more efficient thing to do here.
+        # <
         recs = simulator.records.copy()
         recs = recs[["datetime", "state"]]
         recs["state"] = classifications
 
+        # BROCK OPT >
+        # Looks like this is a placeholder species. 
+        # maybe call it "placeholder" or "simulated species"
+        # to make it clear that it's just a label and not impacting
+        # the logic inside the function.
+        # In the line after...what was the bug? I'm very curious
+        # <
         predicted_bouts = boutparsing.as_bouts(recs, "meerkat") # "meerkat" used only as a stand-in, since the code needs it on the data-processing side but not here
         predicted_bouts = predicted_bouts[predicted_bouts["duration"] >= config.xmin] # What a nasty well-hidden bug! Fixed 24.07.2023
         pred_fits = fitting.fits_to_all_states(predicted_bouts)
@@ -55,10 +73,18 @@ def _simulate_and_get_results(sim_count, ft_params, bd_distributions, epoch, fit
             bouts = predicted_bouts[predicted_bouts["state"] == state]
             bouts = bouts["duration"]
             pred_dist_name, pred_dist = fitting.choose_best_distribution(fit, bouts)
+            # BROCK OPT >
+            # Why not save the actual predicted dist and params for each sim? (e.g. as pickle)
+            # you're only doing 200 iterations, so not that much storage to save more metadata
+            # even if you don't want to save entire input dataset
+            # <
             if pred_dist_name in ["Power_Law", "Truncated_Power_Law"]:# is it scale-free?
                 num_heavy_tails[i] += 1
                 if pred_dist.alpha < 2.0:# is it scale-free with fun params?
                     num_heavy_tails_param_range[i] += 1
+    # BROCK REQ >
+    # Why are we dividing by 2 here? can you at least add a comment to explain?
+    # <
 
     for nres in range(simulator.num_features):
         num_heavy_tails[nres] /= 2.0
@@ -70,6 +96,10 @@ def _simulate_and_get_results(sim_count, ft_params, bd_distributions, epoch, fit
 
     print("Simulation #", sim_count, "will now exit.")
     return None
+    # BROCK OPT >
+    # I don't think the below code actually runs because it's after
+    # the return statement.
+    # <
     # The mp.Pool() object has absolute garbage garbage collection
     # Deleting all data manually here
     del predicted_bouts
@@ -88,13 +118,13 @@ def _helper_func_for_specific_case(ft_params, bd_distributions, epoch, fig, ax):
         print(i)
         np.random.seed()
         simulator = Simulator(bd_distributions, ft_params, epoch)
-        simulator.run(simulations.sconfig.NUM_BOUTS)
+        simulator.run(sconfig.NUM_BOUTS)
         simulator.records["datetime"] = pd.to_datetime(simulator.records["datetime"], unit='s')
 
         actual_bouts = boutparsing.as_bouts(simulator.records[["datetime", "state"]], "meerkat")
         actual_bouts = actual_bouts[actual_bouts["duration"] >= config.xmin] 
 
-        classifications = simulations.classifier.bayes_classify(simulator.records[f"feature5"])
+        classifications = classifier.bayes_classify(simulator.records[f"feature5"])
         recs = simulator.records.copy()
         recs = recs[["datetime", "state"]]
         recs["state"] = classifications
@@ -128,28 +158,54 @@ def generate_illustration_at_crucial_error():
     This is useful for a figure in our paper, but is not generally
     applicable at this stage.
     """
-    parameter_space = simulations.parameter_space.parameter_values(
-        simulations.sconfig.ERRORS_PARAMETER_SPACE_BEGIN,
-        simulations.sconfig.ERRORS_PARAMETER_SPACE_END,
-        simulations.sconfig.ERRORS_PARAMETER_SPACE_NUM
+    # > BROCK OPT
+    # A lot of the code here is duplciated with the function below.
+    # Could they not call a shared function to avoid this?
+    # <
+    # > BROCK OPT
+    # Here you are giving your variable the same name as the module.
+    # This is bad practice because it prevents you from being able to use
+    # that module anymore, and it creates confusion.
+    # <
+    parameter_space = parameter_space.parameter_values(
+        sconfig.ERRORS_PARAMETER_SPACE_BEGIN,
+        sconfig.ERRORS_PARAMETER_SPACE_END,
+        sconfig.ERRORS_PARAMETER_SPACE_NUM
     )
 
     bd_distributions = {
-        'A': pl.Exponential(xmin = config.xmin, parameters=[simulations.sconfig.EXPONENTIAL_LAMBDA], discrete=config.discrete),
-        'B': pl.Exponential(xmin = config.xmin, parameters=[simulations.sconfig.EXPONENTIAL_LAMBDA], discrete=config.discrete)   
+        'A': pl.Exponential(xmin = config.xmin, parameters=[sconfig.EXPONENTIAL_LAMBDA], discrete=config.discrete),
+        'B': pl.Exponential(xmin = config.xmin, parameters=[sconfig.EXPONENTIAL_LAMBDA], discrete=config.discrete)   
     }
 
     epoch = 1.0
     ft_params = [{
-        "A": (mean_a, simulations.sconfig.FEATURE_DIST_VARIANCE),
-        "B": (mean_b, simulations.sconfig.FEATURE_DIST_VARIANCE)}
+        "A": (mean_a, sconfig.FEATURE_DIST_VARIANCE),
+        "B": (mean_b, sconfig.FEATURE_DIST_VARIANCE)}
         for (mean_a, mean_b) in parameter_space]
 
     vals = ft_params[5] # spurious detection of exponential as tpl
+    
+    # > BROCK OPT
+    # You're using two different patterns with this and the function below.
+    # In the main function (below), you have the simulations module write the
+    # data and simulate.py plot it.
+    # 
+    # Here the simulation module itself is doing the plotting.
+    # 
+    # My preferred pattern would be to have one module that generates the
+    # data  (this simulate module), a seperate one that takes in the data and 
+    # generates the plot (maybe a plot_sim_results module).
+    # Then the launch script (simulate.py) calls these two in sequence and 
+    # the data to be plotted is passed as python objects instead of being 
+    # written and read. It's a summary, no? so small enough to be passed in this way.
+    # (Maybe write to disk as a backup/fallback if you're afraid of interuptions.)
+    #
+    # <
 
     fig, ax = plt.subplots()
     _helper_func_for_specific_case(ft_params, bd_distributions, epoch, fig, ax)
-    utilities.saveimg(fig, "simulations_illustration_max_ht")
+    utilities.saveimg(fig, "illustration_max_ht")
     plt.show()
 
 def simulate_with_distribution(distribution_name):
@@ -158,23 +214,26 @@ def simulate_with_distribution(distribution_name):
     prone classifiers, and performs fits on the resulting data.
     """
 
-    parameter_space = simulations.parameter_space.parameter_values(
-        simulations.sconfig.ERRORS_PARAMETER_SPACE_BEGIN,
-        simulations.sconfig.ERRORS_PARAMETER_SPACE_END,
-        simulations.sconfig.ERRORS_PARAMETER_SPACE_NUM
+    # > BROCK OPT
+    # Consider passing the configs into the function in some form or fashion.
+    # <
+    parameter_space = parameter_space.parameter_values(
+        sconfig.ERRORS_PARAMETER_SPACE_BEGIN,
+        sconfig.ERRORS_PARAMETER_SPACE_END,
+        sconfig.ERRORS_PARAMETER_SPACE_NUM
     )
 
     
     if distribution_name == "Power_Law":
         bd_distributions = {
-            'A': pl.Power_Law(xmin = config.xmin, parameters=[simulations.sconfig.POWER_LAW_ALPHA], discrete=config.discrete),
-            'B': pl.Power_Law(xmin = config.xmin, parameters=[simulations.sconfig.POWER_LAW_ALPHA], discrete=config.discrete)   
+            'A': pl.Power_Law(xmin = config.xmin, parameters=[sconfig.POWER_LAW_ALPHA], discrete=config.discrete),
+            'B': pl.Power_Law(xmin = config.xmin, parameters=[sconfig.POWER_LAW_ALPHA], discrete=config.discrete)   
         }
 
     elif distribution_name == "Exponential":
         bd_distributions = {
-            'A': pl.Exponential(xmin = config.xmin, parameters=[simulations.sconfig.EXPONENTIAL_LAMBDA], discrete=config.discrete),
-            'B': pl.Exponential(xmin = config.xmin, parameters=[simulations.sconfig.EXPONENTIAL_LAMBDA], discrete=config.discrete)   
+            'A': pl.Exponential(xmin = config.xmin, parameters=[sconfig.EXPONENTIAL_LAMBDA], discrete=config.discrete),
+            'B': pl.Exponential(xmin = config.xmin, parameters=[sconfig.EXPONENTIAL_LAMBDA], discrete=config.discrete)   
         }
     
     epoch = 1.0
@@ -183,8 +242,8 @@ def simulate_with_distribution(distribution_name):
     fit_results_spec = manager.list()
 
     ft_params = [{
-        "A": (mean_a, simulations.sconfig.FEATURE_DIST_VARIANCE),
-        "B": (mean_b, simulations.sconfig.FEATURE_DIST_VARIANCE)}
+        "A": (mean_a, sconfig.FEATURE_DIST_VARIANCE),
+        "B": (mean_b, sconfig.FEATURE_DIST_VARIANCE)}
         for (mean_a, mean_b) in parameter_space]
 
 
@@ -206,10 +265,10 @@ def simulate_with_distribution(distribution_name):
 
 def _multiprocessing_helper_func(p, expl0, expl1, count, tgtlist, num_sims):
     np.random.seed()
-    dist = simulations.mixed_exponentials.MixedExponential(p, expl0, expl1)
-    vals = dist.generate_random(simulations.sconfig.NUM_BOUTS)
+    dist = mixed_exponentials.MixedExponential(p, expl0, expl1)
+    vals = dist.generate_random(sconfig.NUM_BOUTS)
 
-    bouts_df = pd.DataFrame({"state":["A"]*simulations.sconfig.NUM_BOUTS, "duration":vals})
+    bouts_df = pd.DataFrame({"state":["A"]*sconfig.NUM_BOUTS, "duration":vals})
 
     pred_fits = fitting.fits_to_all_states(bouts_df)
 

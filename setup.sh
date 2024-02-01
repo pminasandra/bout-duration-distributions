@@ -15,4 +15,4 @@ git clone https://github.com/pminasandra/bout-duration-distributions code
 mkdir Data
 mkdir Figures
 
-echo $PWD > code/cwd.txt
+echo $PWD > cwd.txt

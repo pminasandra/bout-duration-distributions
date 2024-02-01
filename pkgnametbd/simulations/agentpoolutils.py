@@ -5,7 +5,7 @@
 import numpy as np
 import pandas as pd
 
-import boutparsing
+from pkgnametbd import boutparsing
 
 def recs_as_pd_dataframes(data):
     """

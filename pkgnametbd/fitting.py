@@ -1,3 +1,5 @@
+#! /usr/bin/env python 
+
 # Pranav Minasandra
 # pminasandra.github.io
 # Dec 26, 2022
@@ -17,10 +19,10 @@ import numpy as np
 import pandas as pd
 import powerlaw as pl
 
-import config
-import classifier_info
-import boutparsing
-import utilities
+from pkgnametbd import config
+from pkgnametbd import classifier_info
+from pkgnametbd import boutparsing
+from pkgnametbd import utilities
 
 if not config.SUPPRESS_INFORMATIVE_PRINT:
     print = utilities.sprint
@@ -84,7 +86,7 @@ def statewise_bouts(dataframe):
  
 def fits_to_all_states(dataframe, *args, **kwargs):
     """
-    Performs powerlaw.Fit for all states separately
+    Performs powerlaw. Fit for all states separately
     Args:
         dataframe (pandas.DataFrame): typically yielded by a
         boutparsing.bouts_data_generator()

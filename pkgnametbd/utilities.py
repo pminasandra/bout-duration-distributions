@@ -7,7 +7,7 @@ import inspect
 import os
 import os.path
 
-import config
+from pkgnametbd import config
 
 
 def saveimg(obj, name, directory=config.FIGURES):

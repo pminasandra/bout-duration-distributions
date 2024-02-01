@@ -14,9 +14,9 @@ import random
 
 import pandas as pd
 
-import classifier_info
-import config
-import utilities
+from pkgnametbd import classifier_info
+from pkgnametbd import config
+from pkgnametbd import utilities
 
 if not config.SUPPRESS_INFORMATIVE_PRINT:
     print = utilities.sprint

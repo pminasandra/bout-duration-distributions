@@ -72,6 +72,14 @@ Below are details about how to install and run this software
 
 ## Pre-requisite software
 
+<!--- BROCK - REQ
+Somewhere you should note which version of python and which version of each package you ran this against for the paper.
+---> 
+
+<!--- BROCK - OPT
+Standard practice is to put these in requirements.txt. If your audiance is familliar with python, that's where they will look for them. If your audience is unfamilliar with python, they will need more than a list of packages to understand how to install them.
+--->
+
 The following packages have to be installed separately:
 
 - `matplotlib`
@@ -84,6 +92,18 @@ The following packages have to be installed separately:
 
 
 ## Installation and setup
+<!--- BROCK - OPT
+I think these steps could be handled by the directory structure + code 
+Ok, the script makes it easier, but I think you can eliminate the need for it and just ask people to clone the repo.
+
+By "handled by the code", I mean have some module that runs at the start of each script like
+"if not os.path.exists(): os.mkdir('Figures')
+
+(The data directory the user will need to make/supply the path because they are supplying the contents I guess?)
+
+A common pattern is to hold the path to these kind of data directories in environment variables so the user
+can change them from the defaults.
+---> 
 
 **NOTE**: On Linux and (possibly Mac), several below steps are automated by running the following command:
 
@@ -121,6 +141,13 @@ You can do this in linux-like command lines like this:
 echo $PWD > code/cwd.txt
 ```
 
+<!--- BROCK - REQ
+Ok, step 5 is some serious hand waving.
+What kinds of data are appropriate to use here?
+What format does this data need to be in?
+etc.
+--->
+
 5. After this, copy any behaviour sequence data folders into the Data/ folder.
 
 # Usage
@@ -130,11 +157,14 @@ Run all indicated python scripts using a terminal, with the command
 
 Analyses are to be done as follows:
 
-- Running `fitting.py` generates all bout duration
+<!--- BROCK - OPT
+Suggest either making these executables or specifying to run them like "python3 fitting.py" etc.
+--->
+- Running `python code/pkgnametbd/fitting.py` generates all bout duration
     distributions and generates tables containing AIC values. 
-- Running `survival.py` creates plots with the hazard functions for all behaviours. 
-- Running `persistence.py` performs DFA and mutual information decay analyses.
-- Running `simulate.py` runs all simulations mentioned in the paper and its appendices.
+- Running `python code/pkgnametbd/survival.py` creates plots with the hazard functions for all behaviours. 
+- Running `python code/pkgnametbd/persistence.py` performs DFA and mutual information decay analyses.
+- Running `python code/pkgnametbd/simulate.py` runs all simulations mentioned in the paper and its appendices.
 
 For academic colleagues, it is easy to re-work this code in your own analyses.
 Most functions also come with helpful docstrings, and the overall code structure
