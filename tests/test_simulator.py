@@ -8,8 +8,6 @@ class MockDist:
     def __init__(self, fn):
         self.generate_random = fn
 
-cap_letters = map(chr, range(65, 91))
-
 # SO#38065898
 def np_remove_repeated_values(a):
     return np.concatenate((
