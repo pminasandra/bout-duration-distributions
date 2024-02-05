@@ -8,8 +8,6 @@ class MockDist:
     def __init__(self, fn):
         self.generate_random = fn
 
-cap_letters = map(chr, range(65, 91))
-
 # SO#38065898
 def np_remove_repeated_values(a):
     return np.concatenate((
@@ -226,5 +224,27 @@ def test_ft_params_used(mocker):
     assert all(records['feature0'].to_numpy() == f0_expected)
     assert all(records['feature1'].to_numpy() == f1_expected)
 
-# check that epoch is respected and sequence is calcualted accurately
-# from bout length
+@pytest.mark.skip(reason="Does changing epochs causes trace")
+@pytest.mark.parametrize('epoch', [.5, 1, 2])
+def test_different_epochs_run_without_error(epoch, mocker):
+    mocker.patch('numpy.random.normal', lambda mu, sigma, n: np.repeat(0, n))
+
+    dist = MockDist(lambda n: np.array([1, 2, 3, 4]*2))
+    simulator = Simulator(
+        bd_distributions={'A': dist, 'B': dist},
+        ft_params= {'A': (0, 1), 'B': (0, 1)},
+        epoch = epoch
+    )
+    simulator.run(4)
+
+
+# TODO: if above can run without error, add some assertions that the result is correct
+# e.g. 
+# Sequence at epoch len 1 would look like
+# ABBAAABBBB
+# Using grain of 2 would cut like
+# AB|BA|AA|BB|BB
+# If the value at start of epoch is chosen, would result in:
+# ABABB
+# If value at end of epoch is chose, would result in
+# BAABB

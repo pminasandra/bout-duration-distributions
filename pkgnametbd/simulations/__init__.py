@@ -21,10 +21,17 @@ from . import parameter_space
 from .simulator import Simulator
 from . import mixed_exponentials
 
+# > BROCK OPT
+# Why not use a logger?
+# < 
 if not config.SUPPRESS_INFORMATIVE_PRINT:
     old_print = print
     print = utilities.sprint
 
+# > BROCK OPT
+# Seems like the arg "sim_count" is more like sim id or sim index
+# count sounds like a total or a sum
+# <
 # The below function will be run in parallel many times
 def _simulate_and_get_results(sim_count, ft_params, bd_distributions, epoch, fit_results, fit_results_spec):
 
@@ -42,10 +49,21 @@ def _simulate_and_get_results(sim_count, ft_params, bd_distributions, epoch, fit
     for i in range(simulator.num_features):
         print(sim_count, ":", i)
         classifications = classifier.bayes_classify(simulator.records[f"feature{i}"])
+        # BROCK OPT >
+        # It looks like you are copying a datatable here and then throwing away 
+        # all except one column of it. There is probably a more efficient thing to do here.
+        # <
         recs = simulator.records.copy()
         recs = recs[["datetime", "state"]]
         recs["state"] = classifications
 
+        # BROCK OPT >
+        # Looks like this is a placeholder species. 
+        # maybe call it "placeholder" or "simulated species"
+        # to make it clear that it's just a label and not impacting
+        # the logic inside the function.
+        # In the line after...what was the bug? I'm very curious
+        # <
         predicted_bouts = boutparsing.as_bouts(recs, "meerkat") # "meerkat" used only as a stand-in, since the code needs it on the data-processing side but not here
         predicted_bouts = predicted_bouts[predicted_bouts["duration"] >= config.xmin] # What a nasty well-hidden bug! Fixed 24.07.2023
         pred_fits = fitting.fits_to_all_states(predicted_bouts)
@@ -55,10 +73,18 @@ def _simulate_and_get_results(sim_count, ft_params, bd_distributions, epoch, fit
             bouts = predicted_bouts[predicted_bouts["state"] == state]
             bouts = bouts["duration"]
             pred_dist_name, pred_dist = fitting.choose_best_distribution(fit, bouts)
+            # BROCK OPT >
+            # Why not save the actual predicted dist and params for each sim? (e.g. as pickle)
+            # you're only doing 200 iterations, so not that much storage to save more metadata
+            # even if you don't want to save entire input dataset
+            # <
             if pred_dist_name in ["Power_Law", "Truncated_Power_Law"]:# is it scale-free?
                 num_heavy_tails[i] += 1
                 if pred_dist.alpha < 2.0:# is it scale-free with fun params?
                     num_heavy_tails_param_range[i] += 1
+    # BROCK REQ >
+    # Why are we dividing by 2 here? can you at least add a comment to explain?
+    # <
 
     for nres in range(simulator.num_features):
         num_heavy_tails[nres] /= 2.0
@@ -70,6 +96,10 @@ def _simulate_and_get_results(sim_count, ft_params, bd_distributions, epoch, fit
 
     print("Simulation #", sim_count, "will now exit.")
     return None
+    # BROCK OPT >
+    # I don't think the below code actually runs because it's after
+    # the return statement.
+    # <
     # The mp.Pool() object has absolute garbage garbage collection
     # Deleting all data manually here
     del predicted_bouts
@@ -128,6 +158,15 @@ def generate_illustration_at_crucial_error():
     This is useful for a figure in our paper, but is not generally
     applicable at this stage.
     """
+    # > BROCK OPT
+    # A lot of the code here is duplciated with the function below.
+    # Could they not call a shared function to avoid this?
+    # <
+    # > BROCK OPT
+    # Here you are giving your variable the same name as the module.
+    # This is bad practice because it prevents you from being able to use
+    # that module anymore, and it creates confusion.
+    # <
     parameter_space = parameter_space.parameter_values(
         sconfig.ERRORS_PARAMETER_SPACE_BEGIN,
         sconfig.ERRORS_PARAMETER_SPACE_END,
@@ -146,6 +185,23 @@ def generate_illustration_at_crucial_error():
         for (mean_a, mean_b) in parameter_space]
 
     vals = ft_params[5] # spurious detection of exponential as tpl
+    
+    # > BROCK OPT
+    # You're using two different patterns with this and the function below.
+    # In the main function (below), you have the simulations module write the
+    # data and simulate.py plot it.
+    # 
+    # Here the simulation module itself is doing the plotting.
+    # 
+    # My preferred pattern would be to have one module that generates the
+    # data  (this simulate module), a seperate one that takes in the data and 
+    # generates the plot (maybe a plot_sim_results module).
+    # Then the launch script (simulate.py) calls these two in sequence and 
+    # the data to be plotted is passed as python objects instead of being 
+    # written and read. It's a summary, no? so small enough to be passed in this way.
+    # (Maybe write to disk as a backup/fallback if you're afraid of interuptions.)
+    #
+    # <
 
     fig, ax = plt.subplots()
     _helper_func_for_specific_case(ft_params, bd_distributions, epoch, fig, ax)
@@ -158,6 +214,9 @@ def simulate_with_distribution(distribution_name):
     prone classifiers, and performs fits on the resulting data.
     """
 
+    # > BROCK OPT
+    # Consider passing the configs into the function in some form or fashion.
+    # <
     parameter_space = parameter_space.parameter_values(
         sconfig.ERRORS_PARAMETER_SPACE_BEGIN,
         sconfig.ERRORS_PARAMETER_SPACE_END,
@@ -204,15 +263,36 @@ def simulate_with_distribution(distribution_name):
     np.savetxt(os.path.join(config.DATA, f"simulation_{distribution_name}_heavy_tails_params.npout"), fit_results_spec)
 
 
+# > BROCK OPT
+# The name of this function vs _simulate_and_get_results do not hint at all on
+# the differences between them/what each one does. Suggest naming something more
+# like "run_error_rate_sim_for_single_param_set" and "run_single_mixed_exp_sim".
+# <
+# > BROCK OPT
+# NUM_SIMS arg is not used, also if it was needed, you could derive as len(tgtlist)
+# <
 def _multiprocessing_helper_func(p, expl0, expl1, count, tgtlist, num_sims):
     np.random.seed()
     dist = mixed_exponentials.MixedExponential(p, expl0, expl1)
+    # > BROCK REQ
+    # In the text you say you take 10K samples from each dist,
+    # here it looks like you are taking only 1K samples from each dist
+    # <
     vals = dist.generate_random(sconfig.NUM_BOUTS)
 
     bouts_df = pd.DataFrame({"state":["A"]*sconfig.NUM_BOUTS, "duration":vals})
 
     pred_fits = fitting.fits_to_all_states(bouts_df)
 
+    # > BROCK OPT
+    # why make this a for loop when there is only one item?
+    # you can just set state = "A". In fact you can set tha that at the top of
+    # this function and avoid referencing "A" literally in bouts_df.
+    # also...you are re-deriving vals below. 
+    # The below 6 lines can be simplified to 2 lines:
+    # dist_name, dist = fitting.choose_best_distribution(pred_fits["A"], vals)
+    # tgtlist[count] = dist_name
+    # <
     for state in ["A"]:
         fit = pred_fits[state]
         bouts = bouts_df[bouts_df["state"] == state]
@@ -232,6 +312,10 @@ def check_mixed_exps():
 
     manager = mp.Manager()
     list_ = manager.list()
+    # > BROCK OPT
+    # I think this list will eventually contain strings not ints/floats, so
+    # probably good practice to make it ['']*NUM_SIMS to hint at that.
+    # <
     list_.extend([0]*NUM_SIMS)
 
     def parameter_generate():
