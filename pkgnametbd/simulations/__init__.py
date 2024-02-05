@@ -263,15 +263,36 @@ def simulate_with_distribution(distribution_name):
     np.savetxt(os.path.join(config.DATA, f"simulation_{distribution_name}_heavy_tails_params.npout"), fit_results_spec)
 
 
+# > BROCK OPT
+# The name of this function vs _simulate_and_get_results do not hint at all on
+# the differences between them/what each one does. Suggest naming something more
+# like "run_error_rate_sim_for_single_param_set" and "run_single_mixed_exp_sim".
+# <
+# > BROCK OPT
+# NUM_SIMS arg is not used, also if it was needed, you could derive as len(tgtlist)
+# <
 def _multiprocessing_helper_func(p, expl0, expl1, count, tgtlist, num_sims):
     np.random.seed()
     dist = mixed_exponentials.MixedExponential(p, expl0, expl1)
+    # > BROCK REQ
+    # In the text you say you take 10K samples from each dist,
+    # here it looks like you are taking only 1K samples from each dist
+    # <
     vals = dist.generate_random(sconfig.NUM_BOUTS)
 
     bouts_df = pd.DataFrame({"state":["A"]*sconfig.NUM_BOUTS, "duration":vals})
 
     pred_fits = fitting.fits_to_all_states(bouts_df)
 
+    # > BROCK OPT
+    # why make this a for loop when there is only one item?
+    # you can just set state = "A". In fact you can set tha that at the top of
+    # this function and avoid referencing "A" literally in bouts_df.
+    # also...you are re-deriving vals below. 
+    # The below 6 lines can be simplified to 2 lines:
+    # dist_name, dist = fitting.choose_best_distribution(pred_fits["A"], vals)
+    # tgtlist[count] = dist_name
+    # <
     for state in ["A"]:
         fit = pred_fits[state]
         bouts = bouts_df[bouts_df["state"] == state]
@@ -291,6 +312,10 @@ def check_mixed_exps():
 
     manager = mp.Manager()
     list_ = manager.list()
+    # > BROCK OPT
+    # I think this list will eventually contain strings not ints/floats, so
+    # probably good practice to make it ['']*NUM_SIMS to hint at that.
+    # <
     list_.extend([0]*NUM_SIMS)
 
     def parameter_generate():
