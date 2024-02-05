@@ -166,23 +166,42 @@ def test_passthrough_all_features(mocker):
         fit_results=fit_results,
         fit_results_spec=fit_results_spec
     )
-    ## Assert Expectations
-    # TODO: run assertions
-    '''
-    as_bout_cal = mocks['pkgnametbd.boutparsing.as_bouts'].call_args_list
-    expected_state_seqs = set(
-        [
-            v['charseq'] for v in FEATURE_CONFIG.values()
-        ]
-    )
+    
+    # Assert calls to as_bouts
+    expected_state_seqs = set([v['charseq'] for v in FEATURE_CONFIG.values()])
     actual_state_seqs = set()
-    for argd in as_bout_cal:
-        assert 'dataframe' in argd
-        assert 'state' in argd['dataframe']
-        actual_state_seqs.add(''.join(argd['dataframe']['state'].tolist()))
-
+    for args, kwargs in mocks['pkgnametbd.boutparsing.as_bouts'].call_args_list:
+        df = kwargs.get('dataframe', args[0])
+        assert 'state' in df
+        actual_state_seqs.add(''.join(df['state'].tolist()))
     assert expected_state_seqs == actual_state_seqs
-    '''
+
+    # Assert calls to fits_all_states
+    expected_bouts = set([v['bouts'].to_string() for v in FEATURE_CONFIG.values()])
+    actual_bouts = set()
+    for args, kwargs in mocks['pkgnametbd.fitting.fits_to_all_states'].call_args_list:
+        df = kwargs.get('dataframe', args[0])
+        actual_bouts.add(df.to_string())
+    assert expected_bouts == actual_bouts
+
+    # Assert calls to choose_best_dist
+    expected_fit_bouts = set([
+        (
+            v['fits'][state],
+            # TODO: Set bouts by state explicitly in feature_config
+            v['bouts'][v['bouts']['state'] == state]['duration'].to_string()
+        )
+        for v in FEATURE_CONFIG.values()
+        for state in v['fits'].keys()
+    ])
+    actual_fit_bouts = set()
+    for args, kwargs in mocks['pkgnametbd.fitting.choose_best_distribution'].call_args_list:
+        fit = kwargs.get('fit', args[0])
+        bouts = kwargs.get('bouts', args[1])
+        actual_fit_bouts.add((fit, bouts.to_string()))
+    assert expected_fit_bouts == actual_fit_bouts
+    
+    # Assert "outputs"
     assert len(fit_results) == 1
     assert len(fit_results_spec) == 1
     assert fit_results[0] == [v['fit_results'] for v in FEATURE_CONFIG.values()]
