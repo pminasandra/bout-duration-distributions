@@ -1,5 +1,3 @@
-#! /usr/bin/env python 
-
 # Pranav Minasandra
 # pminasandra.github.io
 # Sep 27, 2023

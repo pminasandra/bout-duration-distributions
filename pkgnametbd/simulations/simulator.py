@@ -37,12 +37,7 @@ class Simulator:
     >>> s.records
     <pd.DataFrame> with keys "datetime", "state", and "feature"
     """
-    # BROCK OPT >
-    # The term "feature" here is a bit confusing to me. Maybe it's a term in the literature
-    # That I'm not too familliar with? When I think of "feature" I think of a predictor
-    # variable in an ML model. It seems like here "state" is true state and each "feature"
-    # is a measurement where the state is an input to the distribution of that measurement.
-    # <
+
     def __init__(self, bd_distributions, ft_params, epoch):
         """
         Initialises simulator
@@ -112,15 +107,6 @@ class Simulator:
         i = 0
         while i < num_bouts and current_time < sconfig.MAX_REC_TIME:
             current_state = states[i % 2]
-            # BROCK OPT > 
-            # It looks like you are generating twice as many bout values
-            # as you are using. If I'm understanding correctly, you're
-            # only using odd indexed bout values from one state and even
-            # indexed bout values from the other. Generating random 
-            # values can sometimes be one of the more compute 
-            # intensive parts of simulations so probably not great to do
-            # so needlessly. (If that's what's going on.)
-            # <
             current_bout = int(bout_values[current_state][i])
             if current_time + current_bout > sconfig.MAX_REC_TIME:
                 current_bout = sconfig.MAX_REC_TIME - current_time

@@ -1,5 +1,3 @@
-#! /usr/bin/env python 
-
 # Pranav Minasandra
 # pminasandra.github.io
 # Dec 26, 2022
@@ -86,7 +84,7 @@ def statewise_bouts(dataframe):
  
 def fits_to_all_states(dataframe, *args, **kwargs):
     """
-    Performs powerlaw. Fit for all states separately
+    Performs powerlaw.Fit for all states separately
     Args:
         dataframe (pandas.DataFrame): typically yielded by a
         boutparsing.bouts_data_generator()
