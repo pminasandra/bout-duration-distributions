@@ -12,6 +12,14 @@ from collections.abc import Iterable
 # NOTE: Might be a good idea to generalise to different probabilities across behaviours
 # This will be an easy fix, and quite useful in the long run.
 
+# > BROCK OPT
+# To me, it's a bit counterintuitive that
+# "num" going into prob_switching is
+# the number of individuals in the target state
+# rather than the current state.
+# 
+#  Would be good to document inputs and outputs of prob_switching.
+# <
 class AgentPool:
     """
     Simulates a large number of interacting agents to generate 2-behaviour sequences
@@ -75,10 +83,20 @@ class AgentPool:
 
         random_draws = np.random.uniform(size=self.num_agents)
 
+        # > BROCK OPT
+        # As demonstrated by my np version, there's 
+        # more efficient ways to write this code.
+        #
+        # Not commenting line by line on efficiency, but happy to discuss.
+        # <
         old_recs = self.records.copy()
         if len(old_recs.shape) == 2:
             old_recs = old_recs[-1, :]
 
+        # > BROCK OPT
+        # It's confusing that you call the states 1 and 2 in these 
+        # variable names, but in the array they're called -1 and 1
+        # <
         num_state_1 = len(old_recs[old_recs == -1.0])
         num_state_2 = self.num_agents - num_state_1
 

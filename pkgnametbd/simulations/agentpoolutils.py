@@ -33,5 +33,8 @@ def recs_as_pd_dataframes(data):
         df = pd.DataFrame({"datetime": datetime, "state": state_copy}) 
         df["datetime"] = pd.to_datetime(df["datetime"], unit='s')
 
+        # > BROCK OPT
+        # Again, confusing to have meerkat inserted here.
+        # <
         yield boutparsing.as_bouts(df, "meerkat") #since meerkat is our 'default' for now
 

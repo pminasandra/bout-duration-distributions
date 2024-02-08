@@ -7,6 +7,10 @@ Wrapper around agentpool and agentpoolutils to perform social interaction
 + behavior dynamics sims
 """
 
+
+# > BROCK OPT
+# unused import
+# <
 import sys
 
 import matplotlib.pyplot as plt
