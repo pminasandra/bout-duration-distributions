@@ -206,6 +206,7 @@ def simulate_with_distribution(distribution_name):
 
 def _multiprocessing_helper_func(p, expl0, expl1, count, tgtlist, num_sims):
     np.random.seed()
+    print(f"Working on p={p}, l1={expl0}, l2={expl1}")
     dist = mixed_exponentials.MixedExponential(p, expl0, expl1)
     vals = dist.generate_random(sconfig.NUM_BOUTS)
 
@@ -218,7 +219,7 @@ def _multiprocessing_helper_func(p, expl0, expl1, count, tgtlist, num_sims):
         bouts = bouts_df[bouts_df["state"] == state]
         bouts = bouts["duration"]
         dist_name, dist = fitting.choose_best_distribution(fit, bouts)
-        tgtlist[count] = dist_name
+        tgtlist[count] = [p, expl0, expl1, dist_name]
 
 
 def check_mixed_exps():
@@ -226,20 +227,25 @@ def check_mixed_exps():
     Simulates data from numerous mixed exponentials (with 2 components mixed),
     and checks the best-fit for the resulting data
     """
-    import pandas
-    NUM_SIMS = 5000
-    expl1 = 0.01
+    import pandas as pd
+    ps = np.arange(0.0, 1.0, 0.01)
+    per_param_pair = 100
+    exp1 = 0.01
+    expl2 = 10.0**(np.arange(-6, 1, 1))
+    NUM_SIMS = len(ps)*len(expl2)*per_param_pair
 
     manager = mp.Manager()
     list_ = manager.list()
     list_.extend([0]*NUM_SIMS)
 
     def parameter_generate():
-        exp2s = 10**(-3*np.random.uniform(size=NUM_SIMS) - 1)
-        ps = np.random.uniform(size=NUM_SIMS)
-        for i in range(NUM_SIMS):
-            pars = (ps[i], expl1, exp2s[i], i, list_, NUM_SIMS)
-            yield pars
+        i = 0
+        for p in ps:
+            for exp2 in expl2:
+                for j in range(per_param_pair):
+                    pars = (p, exp1, exp2, i, list_, NUM_SIMS)
+                    yield pars
+                    i += 1
 
 
     parameter_generator = parameter_generate()
@@ -248,6 +254,8 @@ def check_mixed_exps():
     pool.close()
     pool.join()
 
-    with open(os.path.join(config.DATA, "mixed_exp_fits.txt"), "w") as fd:
-        for dist in list_:
-            old_print(dist, file=fd)
+    df = pd.DataFrame(list(list_), columns=["p", "exp1", "exp2", "dist_name"])
+
+    df.to_csv(os.path.join(config.DATA, "mixed_exp_res.csv"),
+                index=False
+             )
