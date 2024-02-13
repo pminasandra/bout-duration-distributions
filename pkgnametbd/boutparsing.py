@@ -36,6 +36,7 @@ def as_bouts(dataframe, species, randomize=False):
 
     current_state = "UNKNOWN"
     previous_state = "UNKNOWN"
+    previous_recorded_state = "UNKNOWN"
     state_duration = 0.0
     row_num = 0
 
@@ -44,12 +45,15 @@ def as_bouts(dataframe, species, randomize=False):
 
     for datetime, state in zip(datetimes, states):
         if current_state == "UNKNOWN":
+        # Can only happen in first iteration
             row_num += 1
             previous_state = states[0]
             current_state = state
             continue
         current_state = state
         if datetime - datetimes[row_num - 1] != dt.timedelta(seconds=epoch):
+        # If there's a gap in the sequence
+            previous_recorded_state = "UNKNOWN"
             previous_state = "UNKNOWN"
             state_duration = 0.0
         else:
@@ -57,9 +61,13 @@ def as_bouts(dataframe, species, randomize=False):
         current_state = state
 
         if current_state != previous_state:
-            if previous_state != "UNKNOWN":
+        # State changed, so update records
+            if previous_recorded_state != "UNKNOWN" and previous_state != "UNKNOWN":
+                # If the state just now was unknown (timeskip) or
+                # if the previous state was not known
                 bout_states.append(previous_state)
                 bout_durations.append(state_duration)
+            previous_recorded_state = previous_state
             state_duration = 0.0
 
         previous_state = state

@@ -42,7 +42,7 @@ class MixedExponential:
 
         probs = np.random.uniform(size=size)
         dist_id = np.zeros(size)
-        dist_id[probs > self.p_1] = 1
+        dist_id[probs > self.p_0] = 1
 
         random_vars = np.zeros(size)
         s_0s = len(dist_id[dist_id == 0])
