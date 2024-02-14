@@ -249,7 +249,7 @@ def check_mixed_exps():
 
 
     parameter_generator = parameter_generate()
-    pool = mp.Pool(config.NUM_CORES - 3)
+    pool = mp.Pool(config.NUM_CORES)
     pool.starmap(_multiprocessing_helper_func, parameter_generator)
     pool.close()
     pool.join()
