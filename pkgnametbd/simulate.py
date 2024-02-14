@@ -17,6 +17,7 @@ import os.path
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
 
 import config
 import utilities
@@ -70,10 +71,35 @@ if __name__ != "__main__":
 #simulations.generate_illustration_at_crucial_error()
 
 # BLOCK 3: Mixtures of exponentials
-simulations.check_mixed_exps()
+#simulations.check_mixed_exps()
 
+# The above call generates a csv file, which we will now read
+df = pd.read_csv(os.path.join(config.DATA, "mixed_exp_res.csv"))
+ps = df.p.unique()
+exp2s = df.exp2.unique()
+
+# Most common fit for each parameter value
+mode_res = []
+for p in ps:
+    for l2 in exp2s:
+        df_sub = df[(df["p"]==p) & (df["exp2"]==l2)]
+        mode_res.append([p, 0.01, l2, df_sub['dist_name'].mode()[0]])
+
+del df
+df_res = pd.DataFrame(mode_res, columns=["p", "exp1", "exp2", "dist_name"])
+fig, ax = plt.subplots()
+
+for dist_name, data in df_res.groupby(df_res.dist_name):
+    ax.scatter(data.p, data.exp1/data.exp2, label=dist_name, marker="s", s=3.0)
+
+ax.set_yscale("log")
+ax.set_xlabel("$p$")
+ax.set_ylabel(r"$\frac{\lambda_1}{\lambda_2}$")
+ax.legend(framealpha=0.6)
+utilities.saveimg(fig, "mixed_exp_res")
 
 # BLOCK 4: Social reinforcement
+#plt.cla()
 #fig, ax = plt.subplots()
 #for i in range(10):
 #    print(f"Social simulation, iteration {i}")
