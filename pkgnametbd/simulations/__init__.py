@@ -17,9 +17,10 @@ from pkgnametbd import utilities
 
 from . import sconfig
 from . import classifier
-from . import parameter_space
+from . import parameter_space as parameter_space_lib
 from .simulator import Simulator
 from . import mixed_exponentials
+
 
 if not config.SUPPRESS_INFORMATIVE_PRINT:
     old_print = print
@@ -128,7 +129,7 @@ def generate_illustration_at_crucial_error():
     This is useful for a figure in our paper, but is not generally
     applicable at this stage.
     """
-    parameter_space = parameter_space.parameter_values(
+    parameter_space = parameter_space_lib.parameter_values(
         sconfig.ERRORS_PARAMETER_SPACE_BEGIN,
         sconfig.ERRORS_PARAMETER_SPACE_END,
         sconfig.ERRORS_PARAMETER_SPACE_NUM
@@ -158,7 +159,7 @@ def simulate_with_distribution(distribution_name):
     prone classifiers, and performs fits on the resulting data.
     """
 
-    parameter_space = parameter_space.parameter_values(
+    parameter_space = parameter_space_lib.parameter_values(
         sconfig.ERRORS_PARAMETER_SPACE_BEGIN,
         sconfig.ERRORS_PARAMETER_SPACE_END,
         sconfig.ERRORS_PARAMETER_SPACE_NUM

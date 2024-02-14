@@ -14,6 +14,7 @@ Runs a suite of 4 simulations (BLOCKs below)
 
 import os
 import os.path
+import warnings
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -33,6 +34,8 @@ if not config.SUPPRESS_INFORMATIVE_PRINT:
 if __name__ != "__main__":
     raise ImportError("simulate.py is not meant to be imported.")
 
+warnings.filterwarnings("ignore", category=DeprecationWarning)
+warnings.filterwarnings("ignore", category=FutureWarning)
 ## BLOCK 1: Effect of classification
 simulations.simulate_with_distribution("Exponential")
 simulations.simulate_with_distribution("Power_Law")
