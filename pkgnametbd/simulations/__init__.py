@@ -26,7 +26,7 @@ if not config.SUPPRESS_INFORMATIVE_PRINT:
     print = utilities.sprint
 
 # The below function will be run in parallel many times
-def _simulate_and_get_results(sim_count, ft_params, bd_distributions, epoch, fit_results, fit_results_spec):
+def _simulate_and_get_results(sim_count, ft_params, bd_distributions, epoch, fit_results, lognormal_results):
 
     np.random.seed()
     simulator = Simulator(bd_distributions, ft_params, epoch)
@@ -37,7 +37,7 @@ def _simulate_and_get_results(sim_count, ft_params, bd_distributions, epoch, fit
 # because we've decided to try numerous error rates at once
 
     num_heavy_tails = [0 for param in ft_params]
-    num_heavy_tails_param_range = [0 for param in ft_params]
+    num_lognormals = [0 for param in ft_params]
 
     for i in range(simulator.num_features):
         print(sim_count, ":", i)
@@ -57,15 +57,15 @@ def _simulate_and_get_results(sim_count, ft_params, bd_distributions, epoch, fit
             pred_dist_name, pred_dist = fitting.choose_best_distribution(fit, bouts)
             if pred_dist_name in ["Power_Law", "Truncated_Power_Law"]:# is it scale-free?
                 num_heavy_tails[i] += 1
-                if pred_dist.alpha < 2.0:# is it scale-free with fun params?
-                    num_heavy_tails_param_range[i] += 1
+            elif pred_dist_name == "Lognormal":# is it lognormal?
+                num_lognormals[i] += 1
 
     for nres in range(simulator.num_features):
         num_heavy_tails[nres] /= 2.0
-        num_heavy_tails_param_range[nres] /= 2.0
+        num_lognormals[nres] /= 2.0
 
     fit_results.append(num_heavy_tails)
-    fit_results_spec.append(num_heavy_tails_param_range)
+    lognormal_results.append(num_lognormals)
 
 
     print("Simulation #", sim_count, "will now exit.")
@@ -77,7 +77,7 @@ def _simulate_and_get_results(sim_count, ft_params, bd_distributions, epoch, fit
     del recs
     del classifications
     del simulator
-    del num_heavy_tails_param_range
+    del num_lognormals
     del num_heavy_tails
 
 
@@ -180,7 +180,7 @@ def simulate_with_distribution(distribution_name):
     epoch = 1.0
     manager = mp.Manager()
     fit_results = manager.list()
-    fit_results_spec = manager.list()
+    lognormal_results = manager.list()
 
     ft_params = [{
         "A": (mean_a, sconfig.FEATURE_DIST_VARIANCE),
@@ -190,7 +190,7 @@ def simulate_with_distribution(distribution_name):
 
     def _gen():
         for sim_count in range(sconfig.PER_PARAMETER):
-            yield sim_count, ft_params, bd_distributions, epoch, fit_results, fit_results_spec
+            yield sim_count, ft_params, bd_distributions, epoch, fit_results, lognormal_results
 
 
     pool = mp.Pool(config.NUM_CORES)
@@ -199,9 +199,9 @@ def simulate_with_distribution(distribution_name):
     pool.join()
 
     fit_results = np.array(fit_results)
-    fit_results_spec = np.array(fit_results_spec)
+    lognormal_results = np.array(lognormal_results)
     np.savetxt(os.path.join(config.DATA, f"simulation_{distribution_name}_heavy_tails.npout"), fit_results)
-    np.savetxt(os.path.join(config.DATA, f"simulation_{distribution_name}_heavy_tails_params.npout"), fit_results_spec)
+    np.savetxt(os.path.join(config.DATA, f"simulation_{distribution_name}_lognormals.npout"), lognormal_results)
 
 
 def _multiprocessing_helper_func(p, expl0, expl1, count, tgtlist, num_sims):
