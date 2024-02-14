@@ -12,13 +12,14 @@ TOPDIR="$PWD"
 mkdir bout-duration-distributions
 cd bout-duration-distributions
 
+ROOTDIR="$PWD"
 git clone https://github.com/pminasandra/bout-duration-distributions code
 
 mkdir Data/{,meerkat,hyena,coati}
 mkdir Figures
 
 cd code
-echo $PWD > cwd.txt
+echo "$ROOTDIR" > cwd.txt
 python3 -m pip install setuptools wheel
 python3 -m pip install -e .
 python3 -m pip install -r requirements.txt
