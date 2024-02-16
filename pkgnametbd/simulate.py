@@ -37,65 +37,66 @@ if __name__ != "__main__":
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=FutureWarning)
 ## BLOCK 1: Effect of classification
-simulations.simulate_with_distribution("Exponential")
-simulations.simulate_with_distribution("Power_Law")
-
-fig, ax = plt.subplots()
-
-error_rates = np.linspace(
-    simulations.sconfig.ERRORS_PARAMETER_SPACE_BEGIN,
-    simulations.sconfig.ERRORS_PARAMETER_SPACE_END,
-    simulations.sconfig.ERRORS_PARAMETER_SPACE_NUM
-)/2
-
-# Plots for heavy_tails
-heavy_tails_exp = np.loadtxt(os.path.join(config.DATA, "simulation_Exponential_heavy_tails.npout"))
-
-ht_rates = heavy_tails_exp.mean(axis=0)
-ax.plot(error_rates, ht_rates, label="Exponential")
-ax.fill_between(error_rates, ht_rates + 0.5*heavy_tails_exp.std(axis=0), 
-                    ht_rates - 0.5*heavy_tails_exp.std(axis=0), alpha=0.5)
-
-heavy_tails_exp = np.loadtxt(os.path.join(config.DATA, "simulation_Power_Law_heavy_tails.npout"))
-
-ht_rates = heavy_tails_exp.mean(axis=0)
-ax.plot(error_rates, ht_rates, label="Power Law")
-ax.fill_between(error_rates, ht_rates + 0.5*heavy_tails_exp.std(axis=0), 
-                    ht_rates - 0.5*heavy_tails_exp.std(axis=0), alpha=0.5)
-
-ax.set_xlabel("Classifier error")
-ax.set_ylabel("Proportion of results with heavy-tail best fits")
-
-ax.legend(title="True bout duration distribution")
-utilities.saveimg(fig, "simulation_classification_effect_heavy_tails")
-plt.cla()
-
-# Plots for lognormal
-# Just copied from above
-# In a hurry, sorry :(
-lognormal_exp = np.loadtxt(os.path.join(config.DATA, "simulation_Exponential_lognormals.npout"))
-
-ht_rates = lognormal_exp.mean(axis=0)
-ax.plot(error_rates, ht_rates, label="Exponential", color="purple")
-ax.fill_between(error_rates, ht_rates + 0.5*lognormal_exp.std(axis=0), 
-                    ht_rates - 0.5*lognormal_exp.std(axis=0), color="purple",
-                    alpha=0.5)
-
-lognormal_exp = np.loadtxt(os.path.join(config.DATA, "simulation_Power_Law_lognormals.npout"))
-
-ht_rates = lognormal_exp.mean(axis=0)
-ax.plot(error_rates, ht_rates, label="Power Law", color="darkgreen")
-ax.fill_between(error_rates, ht_rates + 0.5*lognormal_exp.std(axis=0), 
-                    ht_rates - 0.5*lognormal_exp.std(axis=0), color="darkgreen",
-                    alpha=0.5)
-
-ax.set_xlabel("Classifier error")
-ax.set_ylabel("Proportion of results with lognormal best fits")
-
-ax.legend(title="True bout duration distribution")
-utilities.saveimg(fig, "simulation_classification_effect_lognormals")
+#simulations.simulate_with_distribution("Exponential")
+#simulations.simulate_with_distribution("Power_Law")
+#
+#fig, ax = plt.subplots()
+#
+#error_rates = np.linspace(
+#    simulations.sconfig.ERRORS_PARAMETER_SPACE_BEGIN,
+#    simulations.sconfig.ERRORS_PARAMETER_SPACE_END,
+#    simulations.sconfig.ERRORS_PARAMETER_SPACE_NUM
+#)/2
+#
+## Plots for heavy_tails
+#heavy_tails_exp = np.loadtxt(os.path.join(config.DATA, "simulation_Exponential_heavy_tails.npout"))
+#
+#ht_rates = heavy_tails_exp.mean(axis=0)
+#ax.plot(error_rates, ht_rates, label="Exponential")
+#ax.fill_between(error_rates, ht_rates + 0.5*heavy_tails_exp.std(axis=0), 
+#                    ht_rates - 0.5*heavy_tails_exp.std(axis=0), alpha=0.5)
+#
+#del heavy_tails_exp
+#heavy_tails_exp = np.loadtxt(os.path.join(config.DATA, "simulation_Power_Law_heavy_tails.npout"))
+#
+#ht_rates = heavy_tails_exp.mean(axis=0)
+#ax.plot(error_rates, ht_rates, label="Power Law")
+#ax.fill_between(error_rates, ht_rates + 0.5*heavy_tails_exp.std(axis=0), 
+#                    ht_rates - 0.5*heavy_tails_exp.std(axis=0), alpha=0.5)
+#
+#ax.set_xlabel("Classifier error")
+#ax.set_ylabel("Proportion of results with heavy-tail best fits")
+#
+#ax.legend(title="True bout duration distribution")
+#utilities.saveimg(fig, "simulation_classification_effect_heavy_tails")
+#plt.cla()
+#
+## Plots for lognormal
+## Just copied from above
+## In a hurry, sorry :(
+#lognormal_exp = np.loadtxt(os.path.join(config.DATA, "simulation_Exponential_lognormals.npout"))
+#
+#ht_rates = lognormal_exp.mean(axis=0)
+#ax.plot(error_rates, ht_rates, label="Exponential", color="purple")
+#ax.fill_between(error_rates, ht_rates + 0.5*lognormal_exp.std(axis=0), 
+#                    ht_rates - 0.5*lognormal_exp.std(axis=0), color="purple",
+#                    alpha=0.5)
+#
+#lognormal_exp = np.loadtxt(os.path.join(config.DATA, "simulation_Power_Law_lognormals.npout"))
+#
+#ht_rates = lognormal_exp.mean(axis=0)
+#ax.plot(error_rates, ht_rates, label="Power Law", color="darkgreen")
+#ax.fill_between(error_rates, ht_rates + 0.5*lognormal_exp.std(axis=0), 
+#                    ht_rates - 0.5*lognormal_exp.std(axis=0), color="darkgreen",
+#                    alpha=0.5)
+#
+#ax.set_xlabel("Classifier error")
+#ax.set_ylabel("Proportion of results with lognormal best fits")
+#
+#ax.legend(title="True bout duration distribution")
+#utilities.saveimg(fig, "simulation_classification_effect_lognormals")
 ## BLOCK 2: why strange stuff happens at error = 0.25
-#simulations.generate_illustration_at_crucial_error()
+simulations.generate_illustration_at_crucial_error()
 
 # BLOCK 3: Mixtures of exponentials
 #simulations.check_mixed_exps()

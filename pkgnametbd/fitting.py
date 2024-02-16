@@ -25,6 +25,9 @@ from pkgnametbd import utilities
 if not config.SUPPRESS_INFORMATIVE_PRINT:
     print = utilities.sprint
 
+if config.COLLAGE_IMAGES:
+    plt.rcParams.update({'font.size': 22})
+
 insufficient_data_flag = config.insufficient_data_flag
 
 def preprocessing_df(dataframe, species):
@@ -334,7 +337,7 @@ def test_for_powerlaws():
             else:
                 ax.set_xlabel("Time (seconds)")
             ax.set_ylabel("CCDF")
-            ax.set_title(f"Species: {species.title()} | State: {state.title()}")
+#            ax.set_title(f"Species: {species.title()} | State: {state.title()}")
             utilities.saveimg(fig, f"Distribution-fits-{species}-{state}")
 
 # Done

@@ -21,6 +21,9 @@ from pkgnametbd import utilities
 if not config.SUPPRESS_INFORMATIVE_PRINT:
     print = utilities.sprint
 
+if config.COLLAGE_IMAGES:
+    plt.rcParams.update({'font.size': 22})
+
 # NOTE: The below function has an argument, hazard_rate, that defaults to False.
 # Initially, we thought 1 - Hazard was a better pitch for the paper. However,
 # since, the paper has switched to hazard rate in totality. Make sure to always
@@ -164,7 +167,7 @@ def generate_behavioural_inertia_plots(add_randomized=False, hazard_rate=False):
             else:
                 ax.set_xlabel("Time (seconds)")
 
-            ax.set_title(f"Species: {species.title()} | State: {state.title()}")
+#            ax.set_title(f"Species: {species.title()} | State: {state.title()}")
             if hazard_rate:
                 ax.set_ylabel("Hazard function")
                 utilities.saveimg(fig, f"Hazard-Rate-{species}-{state}")

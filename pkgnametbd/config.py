@@ -76,6 +76,9 @@ insufficient_data_flag = 'insufficient_data'
 SUPPRESS_INFORMATIVE_PRINT = False
 NUM_CORES = 8
 
+COLLAGE_IMAGES = True # Set to false to get normal images
+# Collage images increases font size
+
 if __name__=="__main__":
     import utilities
     utilities.sprint(f"config.py speaking. current projectroot is {PROJECTROOT}")

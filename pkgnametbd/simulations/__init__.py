@@ -56,6 +56,7 @@ def _simulate_and_get_results(sim_count, ft_params, bd_distributions, epoch, fit
             bouts = predicted_bouts[predicted_bouts["state"] == state]
             bouts = bouts["duration"]
             pred_dist_name, pred_dist = fitting.choose_best_distribution(fit, bouts)
+            print(i, ":", pred_dist_name)
             if pred_dist_name in ["Power_Law", "Truncated_Power_Law"]:# is it scale-free?
                 num_heavy_tails[i] += 1
             elif pred_dist_name == "Lognormal":# is it lognormal?
