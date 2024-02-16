@@ -37,6 +37,10 @@ if __name__ != "__main__":
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 warnings.filterwarnings("ignore", category=FutureWarning)
 ## BLOCK 1: Effect of classification
+# NOTE: Before running the below block, I recommend setting the minimum
+# number of needed bouts in config.py to a low number like 50.
+# We can afford to be a bit less stringent in the simulations
+# And in power-laws, sometimes the number of bouts can dip low.
 simulations.simulate_with_distribution("Exponential")
 simulations.simulate_with_distribution("Power_Law")
 
