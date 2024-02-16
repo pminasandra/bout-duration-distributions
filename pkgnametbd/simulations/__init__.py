@@ -117,7 +117,7 @@ def _helper_func_for_specific_case(ft_params, bd_distributions, epoch, fig, ax):
                 act_label = None
                 pred_label = None
             fit_actual.plot_ccdf(ax=ax, color="maroon", linewidth=0.5, label=act_label)
-            fit_predicted.plot_ccdf(ax=ax, color="maroon", linewidth=0.5, linestyle="dotted", label=pred_label)
+            fit_predicted.plot_ccdf(ax=ax, color="darkblue", linewidth=0.5, linestyle="dotted", label=pred_label)
     ax.legend()
     ax.set_xlabel("Bout duration (t)")
     ax.set_ylabel(r"Pr$(\tau > t)$")
@@ -146,7 +146,7 @@ def generate_illustration_at_crucial_error():
         "B": (mean_b, sconfig.FEATURE_DIST_VARIANCE)}
         for (mean_a, mean_b) in parameter_space]
 
-    vals = ft_params[5] # spurious detection of exponential as tpl
+    vals = ft_params[10] # spurious detection of exponential as tpl
 
     fig, ax = plt.subplots()
     _helper_func_for_specific_case(ft_params, bd_distributions, epoch, fig, ax)
