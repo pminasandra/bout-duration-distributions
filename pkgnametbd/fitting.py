@@ -25,9 +25,6 @@ from pkgnametbd import utilities
 if not config.SUPPRESS_INFORMATIVE_PRINT:
     print = utilities.sprint
 
-if config.COLLAGE_IMAGES:
-    plt.rcParams.update({'font.size': 22})
-
 insufficient_data_flag = config.insufficient_data_flag
 
 def preprocessing_df(dataframe, species):
@@ -344,4 +341,7 @@ def test_for_powerlaws():
     print("Distribution fitting completed.")
 
 if __name__ == "__main__":
+    if config.COLLAGE_IMAGES:
+        plt.rcParams.update({'font.size': 22})
+
     test_for_powerlaws()

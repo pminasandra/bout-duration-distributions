@@ -21,9 +21,6 @@ from pkgnametbd import utilities
 if not config.SUPPRESS_INFORMATIVE_PRINT:
     print = utilities.sprint
 
-if config.COLLAGE_IMAGES:
-    plt.rcParams.update({'font.size': 22})
-
 # NOTE: The below function has an argument, hazard_rate, that defaults to False.
 # Initially, we thought 1 - Hazard was a better pitch for the paper. However,
 # since, the paper has switched to hazard rate in totality. Make sure to always
@@ -179,4 +176,7 @@ def generate_behavioural_inertia_plots(add_randomized=False, hazard_rate=False):
 # Done
 
 if __name__ == "__main__":
+    if config.COLLAGE_IMAGES:
+        plt.rcParams.update({'font.size': 22})
+
     generate_behavioural_inertia_plots(add_randomized=False, hazard_rate=True)
