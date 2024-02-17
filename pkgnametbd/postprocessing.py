@@ -20,11 +20,11 @@ pretty_replace = {
     "Power_Law": "PL",
     "Lognormal": "LN",
     "Exponential": "E",
-    "α": "\\alpha",
-    "λ": "\\lambda",
-    "β": "\\beta",
-    "μ": "\\mu",
-    "σ": "\\sigma"
+    "α": "$\\alpha$",
+    "λ": "$\\lambda$",
+    "β": "$\\beta$",
+    "μ": "$\\mu$",
+    "σ": "$\\sigma$"
 }
 
 fitresults = os.path.join(config.DATA, "FitResults")
