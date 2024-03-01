@@ -41,8 +41,8 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 # number of needed bouts in config.py to a low number like 50.
 # We can afford to be a bit less stringent in the simulations
 # And in power-laws, sometimes the number of bouts can dip low.
-simulations.simulate_with_distribution("Exponential")
-simulations.simulate_with_distribution("Power_Law")
+#simulations.simulate_with_distribution("Exponential")
+#simulations.simulate_with_distribution("Power_Law")
 
 fig, ax = plt.subplots()
 
