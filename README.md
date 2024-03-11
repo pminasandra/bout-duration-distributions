@@ -4,14 +4,20 @@ author: Pranav Minasandra
 ---
 
 # Details
-The analyses in this code forms the basis of our [upcoming preprint](), <full title here>.
+The analyses in this code forms the basis of our
+[pre-print](https://www.biorxiv.org/content/10.1101/2024.01.20.576411v3),
+'Behavioral sequences across multiple animal species in the wild share common structural features'. 
 
 ## People who worked actively on this code
 [Pranav Minasandra](https://pminasandra.github.io)
 
+## People who performed a code review
+Katrina Brock and Ariana Strandburg-Peshkin
+
 ## People whose contributions were necessary for this project to get going
 [Ariana Strandburg-Peshkin](https://cocomo.group),
 Emily Grout,
+Katrina Brock,
 [Meg Crofoot](https://www.ab.mpg.de/crofoot),
 Vlad Demartsev,
 [Andy Gersick](https://circle-polygon-6hmw.squarespace.com/),
@@ -85,13 +91,16 @@ The following packages have to be installed separately:
 
 ## Installation and setup
 
-**NOTE**: On Linux and (possibly Mac), several below steps are automated by running the following command:
+**NOTE**: On Linux and (possibly Mac), several below steps are automated by
+running the following command.:
 
 ```
 curl -sSf https://raw.githubusercontent.com/pminasandra/bout-duration-distributions/master/setup.sh | bash
 ```
 
-If you have run the above command, skip straight to step 5.
+It might fail if your version of `pip` is old; so try updating that if there is
+a `pip` related error.
+**If you have run the above command, skip straight to step 5.**
 
 1. create a project directory at a location of your choice and enter it
 
