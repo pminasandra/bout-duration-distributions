@@ -72,6 +72,9 @@ survival_num_points_to_exclude = 100
 minimum_bouts_for_fitting = 250
 insufficient_data_flag = 'insufficient_data'
 
+# Bootstrapping
+NUM_BOOTSTRAP_REPS = 100
+
 # Miscellaneous
 SUPPRESS_INFORMATIVE_PRINT = False
 NUM_CORES = 8
