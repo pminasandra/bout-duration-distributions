@@ -65,12 +65,17 @@ def markovian_sequence(beh_seq, species, length=None, start=None):
                 elements in beh_seq["state"].
     """
 
+    if length is None:
+        length = len(beh_seq["state"])
+    if start is None:
+        start = beh_seq["state"][0]
+
     # create the necessary piles for drawing with replacement
     piles = {}
     epoch = classifier_info.classifiers_info[species].epoch
     states = beh_seq["state"].unique()
     seq_len = len(beh_seq["state"])
-    print("seq_len:", seq_len)
+
     for state in states:
         ind_state = beh_seq[beh_seq["state"] == state].index
         ind_state = ind_state[ind_state < seq_len - 1]
@@ -85,7 +90,17 @@ def markovian_sequence(beh_seq, species, length=None, start=None):
 
         piles[state] = beh_seq["state"][ind_relevant].to_numpy()
 
-    print(piles)
+    seq = []
+    curr_state = start
+    for t in range(length):
+        seq.append(curr_state)
+        curr_state = np.random.choice(piles[curr_state])
+
+    dts = np.arange(0, length, 1)
+    dts = pd.to_datetime(dts*1e9) #dummy datetimes for other functions
+    df = pd.DataFrame({"datetime": dts, "state": seq})
+
+    return df
 
 if __name__ == "__main__":
     bdg = boutparsing.bouts_data_generator(extract_bouts=False)
@@ -94,5 +109,6 @@ if __name__ == "__main__":
         id_ = databundle["id"]
         data = databundle["data"]
 
-        markovian_sequence(data, species_)
+        k = markovian_sequence(data, species_)
+        print(boutparsing.as_bouts(k, "meerkat"))
         break
