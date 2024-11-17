@@ -173,7 +173,7 @@ def _validated_paired_indices(dt_col, tdiff, indices_start, indices_end, epoch):
 # it sucks to work so much against numpy and pandas in a straightforward implementation of something
  
 
-    mask =  all_tdiffs == tdiff*epoch #mask
+    mask =  np.isclose(all_tdiffs, tdiff*epoch) #mask
     return mask
 
 
