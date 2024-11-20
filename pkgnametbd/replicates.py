@@ -39,7 +39,8 @@ def bootstrap(bouts, size=None):
 
 def bootstrap_iter(bouts, num_replicates, size=None):
     """
-    bootstrap(...) object wrapped in a convenient iterator
+    *GENERATOR*
+    bootstrap(...) object wrapped in a convenient generator
     Args:
         bouts (list-like): bout length data
         num_replicates (int): number of replicates
@@ -50,14 +51,14 @@ def bootstrap_iter(bouts, num_replicates, size=None):
         yield bootstrap(bouts, size=size)
 
 
-def markovian_sequence(beh_seq, species, length=None, start=None):
+def markovised_sequence(beh_seq, species, length=None, start=None):
     """
     Taking in a behavioural sequence, returns a different sequence
     that retains the first-order (e.g., second-to-second) memory, but
     loses memory at longer time-scales.
     Args:
         beh_seq (pd.DataFrame): complete behavioural sequence.
-        s[ecies (str): name of species.
+        species (str): name of species.
         length (int): how long the generated markovian sequence must be.
                 None implies same as len(beh_seq).
         start (any): the state to start from. default None implies the same
@@ -102,13 +103,31 @@ def markovian_sequence(beh_seq, species, length=None, start=None):
 
     return df
 
+def markovised_sequence_iter(beh_seq, species, num_replicates, length=None, start=None)
+    """
+    *GENERATOR*
+    markovised_sequence(...) wrapped in a convenient generator
+    Args:
+        beh_seq (pd.DataFrame): complete behavioural sequence.
+        species (str): name of species.
+        num_replicates (int): number of replicates
+        length (int): how long the generated markovian sequence must be.
+                None implies same as len(beh_seq).
+        start (any): the state to start from. default None implies the same
+                starting as beh_seq. typeof(start) must be same as that of
+                elements in beh_seq["state"].
+    """
+    for i in range(num_replicates):
+        yield markovised_sequence(beh_seq, species, length=length, start=start)
+
 if __name__ == "__main__":
+    print("Trialing markovised_sequence(...)")
     bdg = boutparsing.bouts_data_generator(extract_bouts=False)
     for databundle in bdg:
         species_ = databundle["species"]
         id_ = databundle["id"]
         data = databundle["data"]
 
-        k = markovian_sequence(data, species_)
+        k = markovised_sequence(data, species_)
         print(boutparsing.as_bouts(k, "meerkat"))
         break

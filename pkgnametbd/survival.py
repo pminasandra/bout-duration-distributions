@@ -133,6 +133,18 @@ def get_bootstrapped_beh_in(bouts, num_replicates, hazard_rate=False):
 
     return np.array(data)
 
+def bootstrap_and_analyse(data, species, state):
+    """
+    Main wrapper function for get_bootstrapped_beh_in(...)
+    """
+    bouts = _preprocess_bouts(data, species_, state)
+    ts = _get_unique_times(bouts)
+    bootstrap_table = get_bootstrapped_beh_in(bouts,
+                        num_replicates=config.NUM_BOOTSTRAP_REPS,
+                        hazard_rate=hazard_rate)
+    return bootstrap_table
+
+
 def _get_mean_hazard_rate(bootstrap_haz_table):
     return np.neanmean(bootstrap_haz_table, axis=0)
 
@@ -152,14 +164,16 @@ def _get_95_percent_cis(bootstrap_haz_table):
 
     return np.array(uppers), np.array(lowers)
 
-def generate_behavioural_inertia_plots(add_randomized=False, hazard_rate=False,
-                                    add_bootstrapping=True, add_markov=True):
+def generate_behavioural_inertia_plots(hazard_rate=False, add_bootstrapping=True,
+                                        add_markov=True):
     """
     Generates behavioural inertia vs time plots for all states, individuals,
     species.
     Args:
-        add_randomized (bool): default False, whether to also add same
-                                plots with shuffling of data
+        add_bootstrapping (bool): default True, whether to estimate and add 95%
+                                CIs with bootstrapping.
+        add_markov (bool): default True, whether to repeat analysis with
+                                Markovised sequences.
         hazard_rate (bool): default False, whether to plot hazard rate instead
                                 of behavioural inertia
     """
@@ -199,12 +213,7 @@ def generate_behavioural_inertia_plots(add_randomized=False, hazard_rate=False,
 
 # Do bootstrapping to get error-bounds
             if add_bootstrapping:
-                bouts = _preprocess_bouts(data, species_, state)
-                ts = _get_unique_times(bouts)
-                bootstrap_table = get_bootstrapped_beh_in(bouts,
-                                    num_replicates=config.NUM_BOOTSTRAP_REPS,
-                                    hazard_rate=hazard_rate)
-
+                bootstrap_table = bootstrap_and_analyse(data, species_, state)
                 upper_lim, lower_lim = _get_95_percent_cis(bootstrap_table)
 
 # Make plot
@@ -222,32 +231,9 @@ def generate_behavioural_inertia_plots(add_randomized=False, hazard_rate=False,
             ax.set_xscale(config.survival_xscale)
             ax.set_yscale(config.survival_yscale)
 
-# if add_randomizesd: Also shuffle the data and repeat
-    if add_randomized:
-        for databundle in bdg_r:
-            species_ = databundle["species"]
-            id_ = databundle["id"]
-            data = databundle["data"]
-            print(f"Working on randomised data for {species_} {id_}.")
-
-            if species_ not in plots:
-                plots[species_] = {}
-
-            states = fitting.states_summary(data)["states"]
-
-            for state in states:
-                if state not in plots[species_]:
-                    plots[species_][state] = plt.subplots()
-
-                survival_table = compute_behavioural_inertia(data, species_,
-                                                        state,
-                                                        hazard_rate=hazard_rate)
-                fig, ax = plots[species_][state]
-                ax.step(survival_table[:,0], survival_table[:,1],
-                            color=config.survival_randomization_plot_color,
-                            linewidth=0.75,
-                            alpha=0.4
-                        )
+# Markovised sequence analysis
+            if add_markov:
+# TODO TODO TODO
 
 
 # Saving all plots
