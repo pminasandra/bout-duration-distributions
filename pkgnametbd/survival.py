@@ -43,6 +43,39 @@ def hazard_function(x, data, hazard_rate=False):
     else:
         return 1 - (BI_numer/BI_denom)
 
+def get_BI(bouts, ts=None, hazard_rate=False):
+    """
+    Get behavioural inertial OR hazard function from bouts data.
+    Args:
+        bouts (np.array-like of float)
+        ts (np.array-like of float): at what values of bout-length to sample
+                            the behavioural inertia / hazard function. None
+                            means automatic determination of ts.
+        hazard_rate (bool): default False, whether to plot hazard rate
+                            instead of behavioural inertia.
+    """
+    unique_values = bouts.unique()
+    unique_values.sort()
+    unique_values = unique_values[:-1] # Excluding the biggest bout because
+                                       # it contributes nothing here
+    if config.survival_exclude_last_few_points:
+        if len(bouts) < config.survival_num_points_to_exclude:
+            return "invalid" # sort of hacky, unfortunately :(
+        sorted_vals = np.sort(bouts)
+        nth_from_last = sorted_vals[-config.survival_num_points_to_exclude]
+
+        unique_values = unique_values[unique_values < nth_from_last]
+
+    if ts is None:
+        ts = unique_values
+    BIs = []
+
+    for t in unique_values:
+        BIs.append(hazard_function(t, bouts, hazard_rate))
+
+    table = np.array([ts, BIs]).T
+    return table
+
 def compute_behavioural_inertia(dataframe, species, state, hazard_rate=False):
     """
     Computes behavioural inertia (see docs) for a given dataset.
@@ -60,27 +93,8 @@ def compute_behavioural_inertia(dataframe, species, state, hazard_rate=False):
     dataframe = fitting.preprocessing_df(dataframe, species)
     dataframe = dataframe[dataframe["state"] == state]
 
-    unique_values = dataframe["duration"].unique()
-    unique_values.sort()
-    unique_values = unique_values[:-1] # Excluding the biggest bout because
-                                       # it contributes nothing here
-    if config.survival_exclude_last_few_points:
-        if len(dataframe["duration"]) < config.survival_num_points_to_exclude:
-            return "invalid" # sort of hacky, unfortunately :(
-        sorted_vals = np.sort(dataframe["duration"])
-        nth_from_last = sorted_vals[-config.survival_num_points_to_exclude]
+    return get_BI(dataframe["duration"], hazard_rate=True)
 
-        unique_values = unique_values[unique_values < nth_from_last]
-    ts = []
-    BIs = []
-
-    for t in unique_values:
-        boutvalues = dataframe["duration"]
-        ts.append(t)
-        BIs.append(hazard_function(t, boutvalues, hazard_rate))
-
-    table = np.array([ts, BIs]).T
-    return table
 
 
 def generate_behavioural_inertia_plots(add_randomized=False, hazard_rate=False,
