@@ -3,6 +3,15 @@ author:Pranav Minasandra
 ---
 
 # To-Do list
+- [ ] Markovised sequences in `survival.py`.
+- [ ] Bootstrap sequences in `fitting.py`.
+- [ ] Markovised sequences in `fitting.py`.
+- [ ] Should we compare Markovised sequences statistically, or will
+        visualisation be sufficient?
+- [ ] Nemenman-Bialek Finite Size Correction in `persistence.py`
+- [ ] Markovised sequences in `persistence.py`
+
+## Done
 
 - [x] script to gather data from various sources
 - [x] code to parse data, convert to bouts
@@ -12,7 +21,7 @@ author:Pranav Minasandra
 - [x] write docs about behavioural inertia
 - [x] simulation to test if classifiers cause heavy-tailedness
 - [x] write docs about simulations
-- [ ] discussions on how to proceed
-- [ ] graphics to more convincingly make these arguments
-- [ ] (?) simulation to show effect of biased behavioural proportions
-- [ ] (?) simulation/maths to show that this is not just effect of hierarchical organisation
+- [x] discussions on how to proceed
+- [x] graphics to more convincingly make these arguments
+- [x] (?) simulation to show effect of biased behavioural proportions
+- [x] (?) simulation/maths to show that this is not just effect of hierarchical organisation
