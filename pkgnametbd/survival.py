@@ -38,10 +38,34 @@ def hazard_function(x, data, hazard_rate=False):
     BI_sub = data[data > (x + 1.0)]
     BI_numer = len(BI_sub)
 
+    if BI_denom == 0:
+        return np.nan
+
     if not hazard_rate:
         return (BI_numer/BI_denom)
     else:
         return 1 - (BI_numer/BI_denom)
+
+def _preprocess_bouts(dataframe, species, state):
+    dataframe = fitting.preprocessing_df(dataframe, species)
+    bouts = dataframe[dataframe["state"] == state].duration
+    if len(bouts) < config.survival_num_points_to_exclude:
+        return "invalid" # sort of hacky, unfortunately :(
+
+    return bouts
+
+def _get_unique_times(bouts):
+    unique_values = bouts.unique()
+    unique_values.sort()
+    unique_values = unique_values[:-1] # Excluding the biggest bout because
+                                       # it contributes nothing here
+    if config.survival_exclude_last_few_points:
+        sorted_vals = np.sort(bouts)
+        nth_from_last = sorted_vals[-config.survival_num_points_to_exclude]
+
+        unique_values = unique_values[unique_values < nth_from_last]
+
+    return unique_values
 
 def get_BI(bouts, ts=None, hazard_rate=False):
     """
@@ -53,24 +77,15 @@ def get_BI(bouts, ts=None, hazard_rate=False):
                             means automatic determination of ts.
         hazard_rate (bool): default False, whether to plot hazard rate
                             instead of behavioural inertia.
+    Returns:
+        np.array (two column): time and inertia values
     """
-    unique_values = bouts.unique()
-    unique_values.sort()
-    unique_values = unique_values[:-1] # Excluding the biggest bout because
-                                       # it contributes nothing here
-    if config.survival_exclude_last_few_points:
-        if len(bouts) < config.survival_num_points_to_exclude:
-            return "invalid" # sort of hacky, unfortunately :(
-        sorted_vals = np.sort(bouts)
-        nth_from_last = sorted_vals[-config.survival_num_points_to_exclude]
-
-        unique_values = unique_values[unique_values < nth_from_last]
 
     if ts is None:
-        ts = unique_values
+        ts = _get_unique_times(bouts)
     BIs = []
 
-    for t in unique_values:
+    for t in ts:
         BIs.append(hazard_function(t, bouts, hazard_rate))
 
     table = np.array([ts, BIs]).T
@@ -85,17 +100,57 @@ def compute_behavioural_inertia(dataframe, species, state, hazard_rate=False):
         species (str): name of species from which the data come.
         state (str): name of the behavioural state.
         hazard_rate (bool): default False, whether to plot hazard rate
-                            instead of behavioural inertia
+                            instead of behavioural inertia.
     Returns:
         np.array (two column): time and inertia values
    """
+    bouts = _preprocess_bouts(dataframe, species, state)
 
-    dataframe = fitting.preprocessing_df(dataframe, species)
-    dataframe = dataframe[dataframe["state"] == state]
+    if isinstance(bouts, str):
+        if bouts == "invalid":
+            return "invalid"
 
-    return get_BI(dataframe["duration"], hazard_rate=True)
+    return get_BI(bouts, hazard_rate=hazard_rate)
 
 
+def get_bootstrapped_beh_in(bouts, num_replicates, hazard_rate=False):
+    """
+    Given bouts, bootstraps the data many times to get several estimates of
+    the hazard function.
+    Args:
+        bouts (list-like): all bouts
+        num_replicates (int): how many times the data should be bootstrapped
+        hazard_rate (bool): default False, whether to compute hazard rate
+                            instead of behavioural inertia.
+    """
+
+    unique_times = _get_unique_times(bouts)
+    data = []
+    for bootstrap_bouts in replicates.bootstrap_iter(bouts, num_replicates):
+        data.append(get_BI(bootstrap_bouts, ts=unique_times,
+                                hazard_rate=hazard_rate)[:,1]) # keep only the
+                                                               # hazard rates
+
+    return np.array(data)
+
+def _get_mean_hazard_rate(bootstrap_haz_table):
+    return np.neanmean(bootstrap_haz_table, axis=0)
+
+def _get_95_percent_cis(bootstrap_haz_table):
+
+    num_cols = bootstrap_haz_table.shape[1]
+    uppers, lowers = [], []
+    for i in range(num_cols):
+        hazard_dists = bootstrap_haz_table[:, i]
+        hazard_dists = hazard_dists[~np.isnan(hazard_dists)]
+
+        upper_val = np.quantile(hazard_dists, 0.975, method='closest_observation')
+        lower_val = np.quantile(hazard_dists, 0.025, method='closest_observation')
+
+        uppers.append(upper_val)
+        lowers.append(lower_val)
+
+    return np.array(uppers), np.array(lowers)
 
 def generate_behavioural_inertia_plots(add_randomized=False, hazard_rate=False,
                                     add_bootstrapping=True, add_markov=True):
@@ -111,6 +166,9 @@ def generate_behavioural_inertia_plots(add_randomized=False, hazard_rate=False,
 
 # Load data
     print("Behavioural inertia plot generation initiated.")
+    if add_bootstrapping:
+        print("For each species-state, we will also bootstrap
+                {config.NUM_BOOTSTRAP_REPS} times.")
     bdg = boutparsing.bouts_data_generator()
     if add_randomized:
         bdg_r = boutparsing.bouts_data_generator(randomize=True)
@@ -139,6 +197,16 @@ def generate_behavioural_inertia_plots(add_randomized=False, hazard_rate=False,
                 if survival_table == "invalid":
                     continue
 
+# Do bootstrapping to get error-bounds
+            if add_bootstrapping:
+                bouts = _preprocess_bouts(data, species_, state)
+                ts = _get_unique_times(bouts)
+                bootstrap_table = get_bootstrapped_beh_in(bouts,
+                                    num_replicates=config.NUM_BOOTSTRAP_REPS,
+                                    hazard_rate=hazard_rate)
+
+                upper_lim, lower_lim = _get_95_percent_cis(bootstrap_table)
+
 # Make plot
             fig, ax = plots[species_][state]
             ax.step(survival_table[:,0], survival_table[:,1],
@@ -146,6 +214,11 @@ def generate_behavioural_inertia_plots(add_randomized=False, hazard_rate=False,
                         linewidth=0.75,
                         alpha=0.4
                     )
+            if add_bootstrapping:
+                ax.fill_between(ts, upper_lim, lower_lim,
+                                color=config.survival_plot_color, alpha=0.09,
+                                step='pre')
+
             ax.set_xscale(config.survival_xscale)
             ax.set_yscale(config.survival_yscale)
 
@@ -175,59 +248,6 @@ def generate_behavioural_inertia_plots(add_randomized=False, hazard_rate=False,
                             linewidth=0.75,
                             alpha=0.4
                         )
-
-    if add_bootstrapping:
-        bdg = boutparsing.bouts_data_generator() #restarted
-        for databundle in bdg:
-            species_ = databundle["species"]
-            id_ = databundle["id"]
-            data = databundle["data"]
-            print(f"Working on bootstrapped data for {species_} {id_}.")
-
-            if species_ not in plots:
-                plots[species_] = {}
-
-            states = fitting.states_summary(data)["states"]
-
-            for state in states:
-                if state not in plots[species_]:
-                    plots[species_][state] = plt.subplots()
-                dataframe = fitting.preprocessing_df(data, species_)
-                dataframe = dataframe[dataframe["state"] == state]
-
-                unique_values = dataframe["duration"].unique()
-                unique_values.sort()
-                unique_values = unique_values[:-1] # Excluding the biggest bout because
-                                                   # it contributes nothing here
-                if config.survival_exclude_last_few_points:
-                    if len(dataframe["duration"]) < config.survival_num_points_to_exclude:
-                         continue
-                    sorted_vals = np.sort(dataframe["duration"])
-                    nth_from_last = sorted_vals[-config.survival_num_points_to_exclude]
-
-                    unique_values = unique_values[unique_values < nth_from_last]
-                hazard_dists = []
-
-                i = 0
-                for bootstrap_data in replicates.bootstrap_iter(dataframe["duration"],
-                                                            config.NUM_BOOTSTRAP_REPS):
-                    print(f"{state} replicate #{i}", end="\033[K\r")
-                    hazard_vals = []
-                    for t in unique_values:
-                        hazard_vals.append(hazard_function(t, bootstrap_data, hazard_rate))
-
-                    hazard_dists.append(np.array(hazard_vals))
-                    i += 1
-
-                hazard_dists = np.array(hazard_dists)
-                upper_vals = np.quantile(hazard_dists, 0.975, method='closest_observation', axis=0)
-                lower_vals = np.quantile(hazard_dists, 0.025, method='closest_observation', axis=0)
-
-                fig, ax = plots[species_][state]
-                ax.fill_between(unique_values, upper_vals, lower_vals,
-                                color=config.survival_plot_color, alpha=0.09,
-                                step='pre')
-            print(f"Finished bootstraps for {species_}.")
 
 
 # Saving all plots
