@@ -37,7 +37,7 @@ def bootstrap(bouts, size=None):
     return np.random.choice(bouts, size=size)
 
 
-def bootstrap_iter(bouts, num_replicates, size=None):
+def bootstrapped_data_generator(bouts, num_replicates, size=None):
     """
     *GENERATOR*
     bootstrap(...) object wrapped in a convenient generator
@@ -97,13 +97,14 @@ def markovised_sequence(beh_seq, species, length=None, start=None):
         seq.append(curr_state)
         curr_state = np.random.choice(piles[curr_state])
 
-    dts = np.arange(0, length, 1)
+    dts = np.arange(0, length, 1).astype(float)
+    dts *= epoch
     dts = pd.to_datetime(dts*1e9) #dummy datetimes for other functions
     df = pd.DataFrame({"datetime": dts, "state": seq})
 
     return df
 
-def markovised_sequence_iter(beh_seq, species, num_replicates, length=None, start=None)
+def markovised_sequence_generator(beh_seq, species, num_replicates, length=None, start=None):
     """
     *GENERATOR*
     markovised_sequence(...) wrapped in a convenient generator
@@ -129,5 +130,5 @@ if __name__ == "__main__":
         data = databundle["data"]
 
         k = markovised_sequence(data, species_)
-        print(boutparsing.as_bouts(k, "meerkat"))
+        print(boutparsing.as_bouts(k, species_))
         break

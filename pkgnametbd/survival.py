@@ -27,6 +27,11 @@ if not config.SUPPRESS_INFORMATIVE_PRINT:
 # since, the paper has switched to hazard rate in totality. Make sure to always
 # turn hazard_rate to True whenever using this function.
 
+def _is_invalid(result):
+    if isinstance(result, str):
+        if result == "invalid":
+            return True
+
 def hazard_function(x, data, hazard_rate=False):
     """
     Returns the hazard function at value x (int) based on available bouts data
@@ -106,10 +111,8 @@ def compute_behavioural_inertia(dataframe, species, state, hazard_rate=False):
    """
     bouts = _preprocess_bouts(dataframe, species, state)
 
-    if isinstance(bouts, str):
-        if bouts == "invalid":
-            return "invalid"
-
+    if _is_invalid(bouts):
+        return "invalid"
     return get_BI(bouts, hazard_rate=hazard_rate)
 
 
@@ -126,18 +129,18 @@ def get_bootstrapped_beh_in(bouts, num_replicates, hazard_rate=False):
 
     unique_times = _get_unique_times(bouts)
     data = []
-    for bootstrap_bouts in replicates.bootstrap_iter(bouts, num_replicates):
+    for bootstrap_bouts in replicates.bootstrapped_data_generator(bouts, num_replicates):
         data.append(get_BI(bootstrap_bouts, ts=unique_times,
                                 hazard_rate=hazard_rate)[:,1]) # keep only the
                                                                # hazard rates
 
     return np.array(data)
 
-def bootstrap_and_analyse(data, species, state):
+def bootstrap_and_analyse(data, species, state, hazard_rate=False):
     """
     Main wrapper function for get_bootstrapped_beh_in(...)
     """
-    bouts = _preprocess_bouts(data, species_, state)
+    bouts = _preprocess_bouts(data, species, state)
     ts = _get_unique_times(bouts)
     bootstrap_table = get_bootstrapped_beh_in(bouts,
                         num_replicates=config.NUM_BOOTSTRAP_REPS,
@@ -146,7 +149,7 @@ def bootstrap_and_analyse(data, species, state):
 
 
 def _get_mean_hazard_rate(bootstrap_haz_table):
-    return np.neanmean(bootstrap_haz_table, axis=0)
+    return np.nanmean(bootstrap_haz_table, axis=0)
 
 def _get_95_percent_cis(bootstrap_haz_table):
 
@@ -181,18 +184,27 @@ def generate_behavioural_inertia_plots(hazard_rate=False, add_bootstrapping=True
 # Load data
     print("Behavioural inertia plot generation initiated.")
     if add_bootstrapping:
-        print("For each species-state, we will also bootstrap
-                {config.NUM_BOOTSTRAP_REPS} times.")
-    bdg = boutparsing.bouts_data_generator()
-    if add_randomized:
-        bdg_r = boutparsing.bouts_data_generator(randomize=True)
+        print(f"For each species-state, we will also bootstrap\
+{config.NUM_BOOTSTRAP_REPS} times.")
+    if add_markov:
+        print(f"For each species-state, we will redo analysis\
+with {config.NUM_MARKOVISED_SEQUENCES} Markovised seqeunces.")
+    bdg = boutparsing.bouts_data_generator(extract_bouts=False)
 
     plots = {}
     for databundle in bdg:
         species_ = databundle["species"]
         id_ = databundle["id"]
-        data = databundle["data"]
+        data_true = databundle["data"]
+        data = boutparsing.as_bouts(data_true, species_)
         print(f"Working on {species_} {id_}.")
+        if add_markov:
+            msg = replicates.markovised_sequence_generator(data_true, species_,
+                                            config.NUM_MARKOVISED_SEQUENCES,
+                                            length=None,
+                                            start=None) # use actual
+                                                        # length and start
+            msg = [boutparsing.as_bouts(seq, species_) for seq in msg]
 
 # Generate empty figure
         if species_ not in plots:
@@ -207,13 +219,14 @@ def generate_behavioural_inertia_plots(hazard_rate=False, add_bootstrapping=True
 # Compute hazard rates
             survival_table = compute_behavioural_inertia(data, species_, state,
                                                         hazard_rate=hazard_rate)
-            if isinstance(survival_table, str):
-                if survival_table == "invalid":
-                    continue
+
+            if _is_invalid(survival_table):
+                continue
 
 # Do bootstrapping to get error-bounds
             if add_bootstrapping:
-                bootstrap_table = bootstrap_and_analyse(data, species_, state)
+                bootstrap_table = bootstrap_and_analyse(data, species_, state,
+                                                    hazard_rate=hazard_rate)
                 upper_lim, lower_lim = _get_95_percent_cis(bootstrap_table)
 
 # Make plot
@@ -223,6 +236,7 @@ def generate_behavioural_inertia_plots(hazard_rate=False, add_bootstrapping=True
                         linewidth=0.75,
                         alpha=0.4
                     )
+            ts = survival_table[:,0]
             if add_bootstrapping:
                 ax.fill_between(ts, upper_lim, lower_lim,
                                 color=config.survival_plot_color, alpha=0.09,
@@ -231,9 +245,55 @@ def generate_behavioural_inertia_plots(hazard_rate=False, add_bootstrapping=True
             ax.set_xscale(config.survival_xscale)
             ax.set_yscale(config.survival_yscale)
 
-# Markovised sequence analysis
+# Markovised sequence analysis and plotting
             if add_markov:
-# TODO TODO TODO
+                actual_hazards = []
+                upper_lims, lower_lims = [], []
+
+                for markovised_sequence in msg:
+                        survival_table_m = compute_behavioural_inertia(
+                                                markovised_sequence,
+                                                species_,
+                                                state,
+                                                hazard_rate=hazard_rate
+                                            )
+                        if _is_invalid(survival_table_m):
+                            continue
+                        actual_hazards.append(survival_table_m)
+                        if add_bootstrapping:
+                            bootstrap_table_m = bootstrap_and_analyse(
+                                                    markovised_sequence,
+                                                    species_,
+                                                    state,
+                                                    hazard_rate=hazard_rate
+                                                )
+                            upper_lim, lower_lim = _get_95_percent_cis(bootstrap_table_m)
+                            upper_lims.append(upper_lim)
+                            lower_lims.append(lower_lim)
+
+                min_num_bouts = np.inf
+                for table_m in actual_hazards:
+                    if table_m.shape[0] < min_num_bouts:
+                        min_num_bouts = table_m.shape[0]
+
+                ts = actual_hazards[0][:min_num_bouts, 0]
+                actual_hazards = [table_m[:min_num_bouts, 1] for table_m in actual_hazards]
+                actual_hazards = np.array(actual_hazards)
+
+                mean_haz = _get_mean_hazard_rate(actual_hazards)
+                ax.step(ts, mean_haz,
+                            color=config.markovised_plot_color,
+                            linewidth=0.75, alpha=0.4)
+
+                if add_bootstrapping:
+                    upper_lims = np.array([s[:min_num_bouts] for s in upper_lims])
+                    lower_lims = np.array([s[:min_num_bouts] for s in lower_lims])
+                    upper_lim = np.nanmean(upper_lims, axis=0)
+                    lower_lim = np.nanmean(lower_lims, axis=0)
+                    ax.fill_between(ts, upper_lim, lower_lim,
+                                color=config.markovised_plot_color, alpha=0.09,
+                                step='pre')
+
 
 
 # Saving all plots
@@ -265,4 +325,4 @@ if __name__ == "__main__":
     if config.COLLAGE_IMAGES:
         plt.rcParams.update({'font.size': 22})
 
-    generate_behavioural_inertia_plots(add_randomized=False, hazard_rate=True)
+    generate_behavioural_inertia_plots(hazard_rate=True)
