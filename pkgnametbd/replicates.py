@@ -144,4 +144,3 @@ if __name__ == "__main__":
                     f"{config.NUM_MARKOVISED_SEQUENCES}")
             dataset.to_csv(os.path.join(tgtdir, f"{i}.csv"),
                                     index=False)
-        break
