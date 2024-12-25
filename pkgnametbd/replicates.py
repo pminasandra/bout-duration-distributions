@@ -122,13 +122,26 @@ def markovised_sequence_generator(beh_seq, species, num_replicates, length=None,
         yield markovised_sequence(beh_seq, species, length=length, start=start)
 
 if __name__ == "__main__":
-    print("Trialing markovised_sequence(...)")
+    print("Generating Markovised Sequences.")
+    markovdir = os.path.join(config.DATA, "Markovisations")
+    os.makedirs(markovdir, exist_ok=True)
+    for species_ in config.species:
+        os.makedirs(os.path.join(markovdir, species_), exist_ok=True)
+
     bdg = boutparsing.bouts_data_generator(extract_bouts=False)
     for databundle in bdg:
         species_ = databundle["species"]
         id_ = databundle["id"]
         data = databundle["data"]
 
-        k = markovised_sequence(data, species_)
-        print(boutparsing.as_bouts(k, species_))
+        tgtdir = os.path.join(markovdir, species_, id_)
+        os.makedirs(tgtdir, exist_ok=True)
+        datagen = markovised_sequence_generator(data,
+                                species_, config.NUM_MARKOVISED_SEQUENCES)
+        for i, dataset in enumerate(datagen):
+            print(f"Generating Markovised sequences for",
+                    f"{species_} {id_}: {i+1} out of",
+                    f"{config.NUM_MARKOVISED_SEQUENCES}")
+            dataset.to_csv(os.path.join(tgtdir, f"{i}.csv"),
+                                    index=False)
         break
