@@ -7,6 +7,7 @@ Provides functions needed to bootstrap data and to
 make Markov-assumption replicates of behavioural sequences.
 """
 
+import glob
 import os
 import os.path
 
@@ -120,6 +121,19 @@ def markovised_sequence_generator(beh_seq, species, num_replicates, length=None,
     """
     for i in range(num_replicates):
         yield markovised_sequence(beh_seq, species, length=length, start=start)
+
+def load_markovisations(species_, id_):
+    i = 0
+    tgtdir = os.path.join(config.DATA, "Markovisations", species_, id_)
+
+    files = glob.glob(os.path.join(tgtdir, "*.csv"))
+    for filename in files:
+        if i >= config.NUM_MARKOVISED_SEQUENCES:
+            break
+        df = pd.read_csv(filename)
+        df["datetime"] = pd.to_datetime(df["datetime"], format="mixed")
+        i += 1
+        yield df
 
 if __name__ == "__main__":
     print("Generating Markovised Sequences.")

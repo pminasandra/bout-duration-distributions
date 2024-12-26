@@ -167,6 +167,51 @@ def _get_95_percent_cis(bootstrap_haz_table):
 
     return np.array(uppers), np.array(lowers)
 
+def _markovised_seq_parallel_helper(markovised_sequence, count_markov,
+                            species_, state, hazard_rate, fig, ax):
+
+    print(f"Working on Markovisation #{count_markov + 1}")
+    survival_table_m = compute_behavioural_inertia(
+                            markovised_sequence,
+                            species_,
+                            state,
+                            hazard_rate=hazard_rate
+                        )
+    if _is_invalid(survival_table_m):
+        continue
+    actual_hazards.append(survival_table_m)
+    if add_bootstrapping:
+        bootstrap_table_m = bootstrap_and_analyse(
+                                markovised_sequence,
+                                species_,
+                                state,
+                                hazard_rate=hazard_rate
+                            )
+        upper_lim, lower_lim = _get_95_percent_cis(bootstrap_table_m)
+        upper_lims.append(upper_lim)
+        lower_lims.append(lower_lim)
+    min_num_bouts = np.inf
+    for table_m in actual_hazards:
+    if table_m.shape[0] < min_num_bouts:
+        min_num_bouts = table_m.shape[0]
+
+    ts = actual_hazards[0][:min_num_bouts, 0]
+    actual_hazards = [table_m[:min_num_bouts, 1] for table_m in actual_hazards]
+    actual_hazards = np.array(actual_hazards)
+    mean_haz = _get_mean_hazard_rate(actual_hazards)
+    ax.step(ts, mean_haz,
+            color=config.markovised_plot_color,
+            linewidth=0.75, alpha=0.4)
+
+    if add_bootstrapping:
+    upper_lims = np.array([s[:min_num_bouts] for s in upper_lims])
+    lower_lims = np.array([s[:min_num_bouts] for s in lower_lims])
+    upper_lim = np.nanmean(upper_lims, axis=0)
+    lower_lim = np.nanmean(lower_lims, axis=0)
+    ax.fill_between(ts, upper_lim, lower_lim,
+                color=config.markovised_plot_color, alpha=0.09,
+                step='pre')
+
 def generate_behavioural_inertia_plots(hazard_rate=False, add_bootstrapping=True,
                                         add_markov=True):
     """
@@ -184,10 +229,10 @@ def generate_behavioural_inertia_plots(hazard_rate=False, add_bootstrapping=True
 # Load data
     print("Behavioural inertia plot generation initiated.")
     if add_bootstrapping:
-        print(f"For each species-state, we will also bootstrap\
+        print(f"For each species-state, we will also bootstrap \
 {config.NUM_BOOTSTRAP_REPS} times.")
     if add_markov:
-        print(f"For each species-state, we will redo analysis\
+        print(f"For each species-state, we will redo analysis \
 with {config.NUM_MARKOVISED_SEQUENCES} Markovised seqeunces.")
     bdg = boutparsing.bouts_data_generator(extract_bouts=False)
 
@@ -199,12 +244,9 @@ with {config.NUM_MARKOVISED_SEQUENCES} Markovised seqeunces.")
         data = boutparsing.as_bouts(data_true, species_)
         print(f"Working on {species_} {id_}.")
         if add_markov:
-            msg = replicates.markovised_sequence_generator(data_true, species_,
-                                            config.NUM_MARKOVISED_SEQUENCES,
-                                            length=None,
-                                            start=None) # use actual
+            msg_raw = replicates.load_markovisations(species_, id_) # use actual
                                                         # length and start
-            msg = [boutparsing.as_bouts(seq, species_) for seq in msg]
+            msg = [boutparsing.as_bouts(seq, species_) for seq in msg_raw]
 
 # Generate empty figure
         if species_ not in plots:
@@ -250,27 +292,29 @@ with {config.NUM_MARKOVISED_SEQUENCES} Markovised seqeunces.")
                 actual_hazards = []
                 upper_lims, lower_lims = [], []
 
+                count_markov = 0
                 for markovised_sequence in msg:
-                        survival_table_m = compute_behavioural_inertia(
+                    print(f"Working on Markovisation #{count_markov + 1}")
+                    count_markov += 1
+                    survival_table_m = compute_behavioural_inertia(
+                                            markovised_sequence,
+                                            species_,
+                                            state,
+                                            hazard_rate=hazard_rate
+                                        )
+                    if _is_invalid(survival_table_m):
+                        continue
+                    actual_hazards.append(survival_table_m)
+                    if add_bootstrapping:
+                        bootstrap_table_m = bootstrap_and_analyse(
                                                 markovised_sequence,
                                                 species_,
                                                 state,
                                                 hazard_rate=hazard_rate
                                             )
-                        if _is_invalid(survival_table_m):
-                            continue
-                        actual_hazards.append(survival_table_m)
-                        if add_bootstrapping:
-                            bootstrap_table_m = bootstrap_and_analyse(
-                                                    markovised_sequence,
-                                                    species_,
-                                                    state,
-                                                    hazard_rate=hazard_rate
-                                                )
-                            upper_lim, lower_lim = _get_95_percent_cis(bootstrap_table_m)
-                            upper_lims.append(upper_lim)
-                            lower_lims.append(lower_lim)
-
+                        upper_lim, lower_lim = _get_95_percent_cis(bootstrap_table_m)
+                        upper_lims.append(upper_lim)
+                        lower_lims.append(lower_lim)
                 min_num_bouts = np.inf
                 for table_m in actual_hazards:
                     if table_m.shape[0] < min_num_bouts:
@@ -279,7 +323,6 @@ with {config.NUM_MARKOVISED_SEQUENCES} Markovised seqeunces.")
                 ts = actual_hazards[0][:min_num_bouts, 0]
                 actual_hazards = [table_m[:min_num_bouts, 1] for table_m in actual_hazards]
                 actual_hazards = np.array(actual_hazards)
-
                 mean_haz = _get_mean_hazard_rate(actual_hazards)
                 ax.step(ts, mean_haz,
                             color=config.markovised_plot_color,
