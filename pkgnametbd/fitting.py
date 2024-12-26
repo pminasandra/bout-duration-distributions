@@ -253,7 +253,7 @@ def plot_data_and_fits(fits, state, fig, ax, plot_fits=False, **kwargs):
     return fig, ax
 
 
-def test_for_powerlaws():
+def test_for_powerlaws(add_bootstrapping=True, add_markov=True):
     """
     Compares candidate distributions and writes to DATA/<species>/<state>.csv
     Also plots distributions.
@@ -263,7 +263,7 @@ def test_for_powerlaws():
         None
     """
 
-    bdg = boutparsing.bouts_data_generator()
+    bdg = boutparsing.bouts_data_generator(extract_bouts=False)
     tables = {}
     plots = {}
 
@@ -272,8 +272,10 @@ def test_for_powerlaws():
 
 # Data loading
         print("Processing ", databundle["species"], databundle["id"] + ".")
-        data = databundle["data"]
+        data_raw = databundle["data"]
         species_ = databundle["species"]
+        id_ = databundle["id"]
+        data = boutparsing.as_bouts(data_raw, species_))
  
 # Preprocessing
         data = preprocessing_df(data, species_)
