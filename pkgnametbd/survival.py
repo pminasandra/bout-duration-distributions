@@ -227,7 +227,12 @@ with {config.NUM_MARKOVISED_SEQUENCES} Markovised seqeunces.")
         if add_markov:
             msg_raw = replicates.load_markovisations(species_, id_) # use actual
                                                         # length and start
-            msg = [boutparsing.as_bouts(seq, species_) for seq in msg_raw]
+            pool = mp.Pool()
+            msg = pool.starmap(boutparsing.as_bouts,
+                            ((seq, species_) for seq in msg_raw))
+            pool.close()
+            pool.join()
+            del pool
 
 # Generate empty figure
         if species_ not in plots:
@@ -254,7 +259,7 @@ with {config.NUM_MARKOVISED_SEQUENCES} Markovised seqeunces.")
 
 # Make plot
             fig, ax = plots[species_][state]
-            ax.step(survival_table[:,0], survival_table[:,1],
+            ax.plot(survival_table[:,0], survival_table[:,1],
                         color=config.survival_plot_color,
                         linewidth=0.75,
                         alpha=0.4
@@ -262,8 +267,7 @@ with {config.NUM_MARKOVISED_SEQUENCES} Markovised seqeunces.")
             ts = survival_table[:,0]
             if add_bootstrapping:
                 ax.fill_between(ts, upper_lim, lower_lim,
-                                color=config.survival_plot_color, alpha=0.09,
-                                step='pre')
+                                color=config.survival_plot_color, alpha=0.09)
 
             ax.set_xscale(config.survival_xscale)
             ax.set_yscale(config.survival_yscale)
@@ -293,7 +297,7 @@ with {config.NUM_MARKOVISED_SEQUENCES} Markovised seqeunces.")
                 actual_hazards = [table_m[:min_num_bouts, 1] for table_m in actual_hazards]
                 actual_hazards = np.array(actual_hazards)
                 mean_haz = _get_mean_hazard_rate(actual_hazards)
-                ax.step(ts, mean_haz,
+                ax.plot(ts, mean_haz,
                             color=config.markovised_plot_color,
                             linewidth=0.75, alpha=0.4)
 
@@ -305,8 +309,7 @@ with {config.NUM_MARKOVISED_SEQUENCES} Markovised seqeunces.")
                     upper_lim = np.nanmean(upper_lims, axis=0)
                     lower_lim = np.nanmean(lower_lims, axis=0)
                     ax.fill_between(ts, upper_lim, lower_lim,
-                                color=config.markovised_plot_color, alpha=0.09,
-                                step='pre')
+                                color=config.markovised_plot_color, alpha=0.09)
 
 
 
