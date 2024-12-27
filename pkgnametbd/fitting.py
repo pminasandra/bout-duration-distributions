@@ -21,6 +21,7 @@ from pkgnametbd import config
 from pkgnametbd import classifier_info
 from pkgnametbd import boutparsing
 from pkgnametbd import utilities
+import replicates
 
 if not config.SUPPRESS_INFORMATIVE_PRINT:
     print = utilities.sprint
@@ -137,10 +138,10 @@ def compare_candidate_distributions(fit, data):
     Args:
         fit (powerlaw.Fit): a fit of bout durations.
         data (list like): the data which was used to fit this distribution.
+        bootstrap_data (list): bootstraps of given data for comparsison.
         args, kwargs: passed on to powerlaw.Fit()
     Returns:
-        list: names (str) of distributions
-        list: containing delta-AIC values
+        pd.DataFrame with col headers=candidate names and values=delta-AICs
     """
 
     if fit != insufficient_data_flag:
@@ -164,6 +165,15 @@ def compare_candidate_distributions(fit, data):
             dAICs[candidate_name] = [config.insufficient_data_flag]
 
     return pd.DataFrame(dAICs)
+
+def get_bootstrap_comparisons(all_bootstrap_data, *args, **kwargs):
+    data_return = []
+    for bootstrap_d in all_bootstrap_data:
+        fit = pl.Fit(bootstrap_d, *args, discrete=config.discrete,
+            xmin=config.xmin, **kwargs)
+        data_return.append(compare_candidate_distributions(fit, bootstrap_d))
+
+    return pd.concat(data_return)
 
 def choose_best_distribution(fit, data):
     """
@@ -191,6 +201,11 @@ def choose_best_distribution(fit, data):
     #otherwise:
     return config.insufficient_data_flag, config.insufficient_data_flag
 
+def choose_best_bootstrapped_distribution(bootstrap_daics):
+    if isinstance(bootstrap_daics, str):
+        if bootstrap_daics == config.insufficient_data_flag:
+            return config.insufficient_data_flag
+    return bootstrap_daics.mean().idxmin()
 
 def print_distribution(dist):
     """
@@ -275,7 +290,7 @@ def test_for_powerlaws(add_bootstrapping=True, add_markov=True):
         data_raw = databundle["data"]
         species_ = databundle["species"]
         id_ = databundle["id"]
-        data = boutparsing.as_bouts(data_raw, species_))
+        data = boutparsing.as_bouts(data_raw, species_)
  
 # Preprocessing
         data = preprocessing_df(data, species_)
@@ -290,22 +305,46 @@ def test_for_powerlaws(add_bootstrapping=True, add_markov=True):
             plots[species_] = {}
 
         for state in states:
+            col_names = ["id", "Exponential", "Lognormal",
+                            "Power_Law", "Truncated_Power_Law",
+                            "Stretched_Exponential", "best_fit"]
+            if add_bootstrapping:
+                col_names.append("best_fit_bootstrap")
+
             if state not in tables[species_]:
-                tables[species_][state] = pd.DataFrame(
-                    columns=["id", "Exponential", "Lognormal",
-                                "Power_Law", "Truncated_Power_Law",
-                                "Stretched_Exponential", "best_fit"])
+                tables[species_][state] = pd.DataFrame(columns=col_names)
             if state not in plots[species_]:
                 plots[species_][state] = plt.subplots()
 
+
+
 # Determining best fits
             data_subset = data[data["state"] == state]
+            if add_bootstrapping:
+                if len(data_subset["duration"]) < config.minimum_bouts_for_fitting:
+                    warnings.warn(f"W: insufficient data in bootstrap call.")
+                    bootstrap_data = config.insufficient_data_flag
+                else:
+                    bootstrap_data = replicates.bootstrapped_data_generator(
+                        data_subset["duration"],
+                        config.NUM_BOOTSTRAP_REPS
+                    )
+                    bootstrap_data = list(bootstrap_data)
+
             table = compare_candidate_distributions(fits[state],
                                                     data_subset["duration"])
             table["id"] = databundle["id"]
             _, best_dist = choose_best_distribution(fits[state],
                                     data_subset["duration"])
             table["best_fit"] = print_distribution(best_dist)
+
+            if add_bootstrapping:
+                if isinstance(bootstrap_data, str):
+                    big_bunch_of_daics = bootstrap_data
+                else:
+                    big_bunch_of_daics = get_bootstrap_comparisons(bootstrap_data)
+                table["best_fit_bootstrap"] =\
+                    choose_best_bootstrapped_distribution(big_bunch_of_daics)
             tables[species_][state] = pd.concat([tables[species_][state], table])
 
 # Generating figures
