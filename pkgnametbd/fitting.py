@@ -253,8 +253,8 @@ def get_ccdf_for_plotting(true_fit, bootstrap_fit):
     true_plot_x, true_plot_y = true_fit.ccdf()
     boots_plot_x, boots_plot_y = bootstrap_fit.ccdf()
 
-    true_plot_x = true_plot_x[:-50]
-    boots_plot_x = boots_plot_x[:-50]
+    true_plot_x = true_plot_x[:-config.error_bars_rlim]
+    boots_plot_x = boots_plot_x[:-config.error_bars_rlim]
     rel_ind = closest_greater_or_equal_index(true_plot_x, boots_plot_x)
 
     yvals = boots_plot_y[rel_ind]
@@ -263,7 +263,7 @@ def get_ccdf_for_plotting(true_fit, bootstrap_fit):
 
 def make_bootstrap_95_CIs(true_fit, all_bootstrap_data):
     xvals, _ = true_fit.ccdf()
-    xvals = xvals[:-50]
+    xvals = xvals[:-config.error_bars_rlim]
 
     yvals_dat = []
     for boots_data, boots_fit in all_bootstrap_data:

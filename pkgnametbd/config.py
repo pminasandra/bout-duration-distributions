@@ -57,6 +57,7 @@ colors = {
 #    'Stretched_Exponential': 'pink'
 }
 fit_line_style = 'dotted'
+error_bars_rlim = 25
 
 
 # markovised sequence analysis and plotting
