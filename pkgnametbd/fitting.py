@@ -168,9 +168,7 @@ def compare_candidate_distributions(fit, data):
 
 def get_bootstrap_comparisons(all_bootstrap_data, *args, **kwargs):
     data_return = []
-    for bootstrap_d in all_bootstrap_data:
-        fit = pl.Fit(bootstrap_d, *args, discrete=config.discrete,
-            xmin=config.xmin, **kwargs)
+    for bootstrap_d, fit in all_bootstrap_data:
         data_return.append(compare_candidate_distributions(fit, bootstrap_d))
 
     return pd.concat(data_return)
@@ -234,6 +232,53 @@ def print_distribution(dist):
     elif type(dist) == pl.Stretched_Exponential:
         return f"Stretched_Exponential(λ={dist.Lambda}; β={dist.beta})"
 
+
+def get_ccdf_for_plotting(true_fit, bootstrap_fit):
+    def closest_greater_or_equal_index(X, Y):
+        # Sort Y and get original indices
+        sorted_indices = np.argsort(Y)
+        sorted_Y = Y[sorted_indices]
+        
+        # Find the index of the smallest element in sorted_Y that is >= x
+        indices_in_sorted = np.searchsorted(sorted_Y, X, side='left')
+        
+        # Initialize the result array with -1 (default for no valid index)
+        result_indices = np.full_like(X, -1, dtype=int)
+        
+        # Filter valid indices where indices_in_sorted is within bounds
+        valid = indices_in_sorted < len(sorted_Y)
+        result_indices[valid] = sorted_indices[indices_in_sorted[valid]]
+        
+        return result_indices
+    true_plot_x, true_plot_y = true_fit.ccdf()
+    boots_plot_x, boots_plot_y = bootstrap_fit.ccdf()
+
+    true_plot_x = true_plot_x[:-50]
+    boots_plot_x = boots_plot_x[:-50]
+    rel_ind = closest_greater_or_equal_index(true_plot_x, boots_plot_x)
+
+    yvals = boots_plot_y[rel_ind]
+    yvals[rel_ind == -1] = np.nan
+    return true_plot_x, yvals
+
+def make_bootstrap_95_CIs(true_fit, all_bootstrap_data):
+    xvals, _ = true_fit.ccdf()
+    xvals = xvals[:-50]
+
+    yvals_dat = []
+    for boots_data, boots_fit in all_bootstrap_data:
+        xvals_temp, yvals_temp = get_ccdf_for_plotting(true_fit, boots_fit)
+        assert np.all(np.equal(xvals, xvals_temp))
+
+        yvals_dat.append(yvals_temp)
+
+    yvals_dat = np.array(yvals_dat)
+    upper_val = np.nanquantile(yvals_dat, 0.975, method='closest_observation', axis=0)
+    lower_val = np.nanquantile(yvals_dat, 0.025, method='closest_observation', axis=0)
+
+    return xvals, upper_val, lower_val
+
+
 def plot_data_and_fits(fits, state, fig, ax, plot_fits=False, **kwargs):
     """
     Plots cumulative complementary distribution function of data and fitted
@@ -281,6 +326,7 @@ def test_for_powerlaws(add_bootstrapping=True, add_markov=True):
     bdg = boutparsing.bouts_data_generator(extract_bouts=False)
     tables = {}
     plots = {}
+    bootstrap_info = {}
 
     print("Initialised distribution fitting sequence.")
     for databundle in bdg:
@@ -303,6 +349,8 @@ def test_for_powerlaws(add_bootstrapping=True, add_markov=True):
             tables[species_] = {}
         if species_ not in plots:
             plots[species_] = {}
+        if species_ not in bootstrap_info:
+            bootstrap_info[species_] = {}
 
         for state in states:
             col_names = ["id", "Exponential", "Lognormal",
@@ -315,21 +363,29 @@ def test_for_powerlaws(add_bootstrapping=True, add_markov=True):
                 tables[species_][state] = pd.DataFrame(columns=col_names)
             if state not in plots[species_]:
                 plots[species_][state] = plt.subplots()
+            if state not in bootstrap_info[species_]:
+                bootstrap_info[species_][state] = []
 
 
 
 # Determining best fits
             data_subset = data[data["state"] == state]
             if add_bootstrapping:
+                curr_iter_invalid = False
                 if len(data_subset["duration"]) < config.minimum_bouts_for_fitting:
-                    warnings.warn(f"W: insufficient data in bootstrap call.")
+                    warnings.warn(f"W: insufficient data in state {state} (add_bootstrapping).")
                     bootstrap_data = config.insufficient_data_flag
+                    curr_iter_invalid = True
                 else:
                     bootstrap_data = replicates.bootstrapped_data_generator(
                         data_subset["duration"],
                         config.NUM_BOOTSTRAP_REPS
                     )
                     bootstrap_data = list(bootstrap_data)
+                    bootstrap_data = [(d,
+                        pl.Fit(d, discrete=config.discrete,
+                                xmin=config.xmin)
+                        ) for d in bootstrap_data]
 
             table = compare_candidate_distributions(fits[state],
                                                     data_subset["duration"])
@@ -339,13 +395,16 @@ def test_for_powerlaws(add_bootstrapping=True, add_markov=True):
             table["best_fit"] = print_distribution(best_dist)
 
             if add_bootstrapping:
-                if isinstance(bootstrap_data, str):
+                if curr_iter_invalid:
                     big_bunch_of_daics = bootstrap_data
                 else:
                     big_bunch_of_daics = get_bootstrap_comparisons(bootstrap_data)
                 table["best_fit_bootstrap"] =\
                     choose_best_bootstrapped_distribution(big_bunch_of_daics)
-            tables[species_][state] = pd.concat([tables[species_][state], table])
+            if not tables[species_][state].empty:
+                tables[species_][state] = pd.concat([tables[species_][state], table])
+            else:
+                tables[species_][state] = table
 
 # Generating figures
             fig, ax = plots[species_][state]
@@ -353,6 +412,12 @@ def test_for_powerlaws(add_bootstrapping=True, add_markov=True):
                                                         plot_fits=False,
                                                         color="darkred",
                                                         alpha=0.3)
+            if add_bootstrapping:
+                if not curr_iter_invalid:
+                    xs, upper_lim, lower_lim = make_bootstrap_95_CIs(fits[state], bootstrap_data)
+                    ax.fill_between(xs, upper_lim, lower_lim,
+                                    color="darkred", alpha=0.09)
+
 
 
 # Saving tabulate data

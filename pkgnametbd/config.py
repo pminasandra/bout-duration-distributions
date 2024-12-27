@@ -60,9 +60,9 @@ fit_line_style = 'dotted'
 
 
 # markovised sequence analysis and plotting
+NUM_MARKOVISED_SEQUENCES = 30
 markovised_plot_color = "darkgreen"
 
-NUM_MARKOVISED_SEQUENCES = 30
 
 # Survival analysis and plots
 survival_plot_color = "darkblue"
