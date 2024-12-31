@@ -9,6 +9,7 @@ See: Alstott J, Bullmore E, Plenz D (2014) powerlaw: A Python Package for
 Analysis of Heavy-Tailed Distributions. PLoS ONE 9(1): e85777 for more details
 """
 
+import multiprocessing as mp
 import os.path
 import warnings
 
@@ -16,6 +17,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import powerlaw as pl
+from scipy.interpolate import interp1d
 
 from pkgnametbd import config
 from pkgnametbd import classifier_info
@@ -103,13 +105,29 @@ def fits_to_all_states(dataframe, *args, **kwargs):
 
     for state in statewise_bouts_data:
         durations = statewise_bouts_data[state]["duration"]
-
+        flag = ""
+        if "flag" not in kwargs:
+            flag = "[markov call]"
+        print(f"Generating fits for {state}")
         if len(durations) < config.minimum_bouts_for_fitting:
-            warnings.warn(f"W: insufficient data for state {state}")
+            warnings.warn(f"W: insufficient data for state {state} {flag}")
             fit = config.insufficient_data_flag
         else:
-            fit = pl.Fit(durations, *args, discrete=config.discrete,
-                xmin=config.xmin, **kwargs)
+            kwargs = {x:y for x,y in kwargs.items() if x != "flag"}
+            try:
+                fit = pl.Fit(durations, *args, discrete=config.discrete,
+                    xmin=config.xmin, **kwargs)
+                _ = fit.power_law
+                _ = fit.exponential
+                _ = fit.lognormal
+                _ = fit.truncated_power_law
+                _ = fit.stretched_exponential
+# Above bullshit is necessary because of issues with lazyloading
+# and multiprocessing. As ever, multiprocessing remains the bane of
+# logic, sense, and all things good on God's green earth.
+            except RecursionError as e:
+                print(e)
+                fit = config.insufficient_data_flag
 
         fitted_distributions[state] = fit
 
@@ -312,6 +330,28 @@ def plot_data_and_fits(fits, state, fig, ax, plot_fits=False, **kwargs):
     #otherwise:
     return fig, ax
 
+def interp_ccdf(xypairs):
+    # Convert tuples to numpy arrays for easier handling
+    xypairs = [(np.array(x), np.array(y)) for x, y in xypairs]
+
+    # Define a common x-grid
+    all_x = np.concatenate([x for x, y in xypairs])
+    x_max = np.max(all_x)
+    common_x = np.arange(1, x_max+1)
+
+    # Interpolate all y-values onto the common x-grid
+    interpolated_ys = []
+    for x, y in xypairs:
+        interpolator = interp1d(x, y, bounds_error=False, fill_value=np.nan)
+        interpolated_ys.append(interpolator(common_x))
+
+    # Stack the interpolated y-values and compute the mean, ignoring NaNs
+    interpolated_ys = np.array(interpolated_ys)
+    mean_y = np.nanmean(interpolated_ys, axis=0)
+    upper_lim = np.nanquantile(interpolated_ys, 0.975, method="closest_observation", axis=0)
+    lower_lim = np.nanquantile(interpolated_ys, 0.025, method="closest_observation", axis=0)
+
+    return common_x, mean_y, upper_lim, lower_lim
 
 def test_for_powerlaws(add_bootstrapping=True, add_markov=True):
     """
@@ -340,10 +380,21 @@ def test_for_powerlaws(add_bootstrapping=True, add_markov=True):
  
 # Preprocessing
         data = preprocessing_df(data, species_)
+        if add_markov:
+            msg = replicates.load_markovisations_parallel(species_, id_)
+            pool = mp.Pool()
+            msg2 = pool.starmap(boutparsing.as_bouts,
+                        [(seq, species_) for seq in msg])
+            pool.close()
+            pool.join()
+            msg = msg2
+            del msg2
 
 # Fitting
-        fits = fits_to_all_states(data, verbose=False)
+        fits = fits_to_all_states(data, flag="", verbose=False)
         states = states_summary(data)["states"]
+        if add_markov:
+            fit_all_markovisations = [fits_to_all_states(d) for d in  msg]
 
         if species_ not in tables:
             tables[species_] = {}
@@ -358,6 +409,8 @@ def test_for_powerlaws(add_bootstrapping=True, add_markov=True):
                             "Stretched_Exponential", "best_fit"]
             if add_bootstrapping:
                 col_names.append("best_fit_bootstrap")
+            if add_markov:
+                col_names.append("perc_markov_ne")
 
             if state not in tables[species_]:
                 tables[species_][state] = pd.DataFrame(columns=col_names)
@@ -370,6 +423,18 @@ def test_for_powerlaws(add_bootstrapping=True, add_markov=True):
 
 # Determining best fits
             data_subset = data[data["state"] == state]
+            print("About to start fit checks")
+            if add_markov:
+                mfits = [fits[state] for fits in fit_all_markovisations]
+                msubsets = [d["state"] == state for d in msg]
+                pool = mp.Pool()
+                mbestfits = [choose_best_distribution(x, y)\
+                                for x,y in zip(mfits, msubsets)]
+                mbestfits = [x for (x,y) in mbestfits]
+
+                mnonexp = len([bf for bf in mbestfits if bf != "Exponential"])
+
+
             if add_bootstrapping:
                 curr_iter_invalid = False
                 if len(data_subset["duration"]) < config.minimum_bouts_for_fitting:
@@ -401,6 +466,9 @@ def test_for_powerlaws(add_bootstrapping=True, add_markov=True):
                     big_bunch_of_daics = get_bootstrap_comparisons(bootstrap_data)
                 table["best_fit_bootstrap"] =\
                     choose_best_bootstrapped_distribution(big_bunch_of_daics)
+            if add_markov:
+                table["perc_markov_ne"] = mnonexp/config.NUM_MARKOVISED_SEQUENCES
+
             if not tables[species_][state].empty:
                 tables[species_][state] = pd.concat([tables[species_][state], table])
             else:
@@ -417,6 +485,14 @@ def test_for_powerlaws(add_bootstrapping=True, add_markov=True):
                     xs, upper_lim, lower_lim = make_bootstrap_95_CIs(fits[state], bootstrap_data)
                     ax.fill_between(xs, upper_lim, lower_lim,
                                     color="darkred", alpha=0.09)
+
+            if add_markov:
+                ccdfs = [f.ccdf() for f in mfits]
+                xrange, mean, ulim, llim = interp_ccdf(ccdfs)
+                ax.plot(xrange, mean, color=config.markovised_plot_color,
+                            linewidth=0.75, alpha=0.4)
+                ax.fill_between(xrangem ulim, llim, color=config.markovised_plot_color,
+                            alpha=0.09)
 
 
 
@@ -450,4 +526,4 @@ if __name__ == "__main__":
     if config.COLLAGE_IMAGES:
         plt.rcParams.update({'font.size': 22})
 
-    test_for_powerlaws()
+    test_for_powerlaws(add_markov=True)

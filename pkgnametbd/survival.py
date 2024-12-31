@@ -225,14 +225,9 @@ with {config.NUM_MARKOVISED_SEQUENCES} Markovised seqeunces.")
         data = boutparsing.as_bouts(data_true, species_)
         print(f"Working on {species_} {id_}.")
         if add_markov:
-            msg_raw = replicates.load_markovisations(species_, id_) # use actual
+            msg_raw = replicates.load_markovisations_parallel(species_, id_) # use actual
                                                         # length and start
-            pool = mp.Pool()
-            msg = pool.starmap(boutparsing.as_bouts,
-                            ((seq, species_) for seq in msg_raw))
-            pool.close()
-            pool.join()
-            del pool
+            msg = [boutparsing.as_bouts(seq, species_) for seq in msg_raw]
 
 # Generate empty figure
         if species_ not in plots:

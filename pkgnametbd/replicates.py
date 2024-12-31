@@ -8,6 +8,7 @@ make Markov-assumption replicates of behavioural sequences.
 """
 
 import glob
+import multiprocessing as mp
 import os
 import os.path
 
@@ -134,6 +135,18 @@ def load_markovisations(species_, id_):
         df["datetime"] = pd.to_datetime(df["datetime"], format="mixed")
         i += 1
         yield df
+
+def _dummyfunc(x):
+    return x
+
+def load_markovisations_parallel(species_, id_):
+    pool = mp.Pool()
+    gen = load_markovisations(species_, id_)
+    mdatasets = pool.map(_dummyfunc, gen)
+    pool.close()
+    pool.join()
+
+    return mdatasets
 
 if __name__ == "__main__":
     print("Generating Markovised Sequences.")
