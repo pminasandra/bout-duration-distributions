@@ -323,7 +323,8 @@ def plot_data_and_fits(fits, state, fig, ax, plot_fits=False, **kwargs):
             candidate.plot_ccdf(ax = ax, color=config.colors[candidate_name],
                                     linestyle=config.fit_line_style,
                                     linewidth=0.5,
-                                    label=candidate_name)
+                                    label=candidate_name,
+                                    zorder=2)
 
         return fig, ax
     #otherwise:
@@ -388,6 +389,7 @@ def test_for_powerlaws(add_bootstrapping=True, add_markov=True):
             pool.join()
             msg = msg2
             del msg2
+            msg = [preprocessing_df(d, species_) for d in msg]
 
 # Fitting
         fits = fits_to_all_states(data, flag="", verbose=False)
@@ -483,7 +485,7 @@ def test_for_powerlaws(add_bootstrapping=True, add_markov=True):
                 if not curr_iter_invalid:
                     xs, upper_lim, lower_lim = make_bootstrap_95_CIs(fits[state], bootstrap_data)
                     ax.fill_between(xs, upper_lim, lower_lim,
-                                    color="darkred", alpha=0.09)
+                                    color="darkred", alpha=0.09, zorder=2)
 
             if add_markov:
                 mfits = [f for f in mfits if f != config.insufficient_data_flag]
@@ -492,9 +494,9 @@ def test_for_powerlaws(add_bootstrapping=True, add_markov=True):
                     xrange, mean, ulim, llim = interp_ccdf(ccdfs)
                     ax.autoscale(enable=False)
                     ax.plot(xrange, mean, color=config.markovised_plot_color,
-                                linewidth=0.75, alpha=0.4)
+                                linewidth=0.75, alpha=0.4, zorder=1)
                     ax.fill_between(xrange, ulim, llim, color=config.markovised_plot_color,
-                                alpha=0.09)
+                                alpha=0.09, zorder=1)
                     ax.autoscale(enable=True)
 
 

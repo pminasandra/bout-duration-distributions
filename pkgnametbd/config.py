@@ -17,7 +17,9 @@ FIGURES = os.path.join(PROJECTROOT, "Figures")
 
 
 # Species
-species = ['meerkat', 'coati', 'hyena']
+#species = ['meerkat', 'coati', 'hyena']
+species = ['meerkat']
+
 for s in species:
     assert s in os.listdir(DATA)
     assert os.path.isdir(os.path.join(DATA, s))
@@ -57,11 +59,11 @@ colors = {
 #    'Stretched_Exponential': 'pink'
 }
 fit_line_style = 'dotted'
-error_bars_rlim = 10
+error_bars_rlim = 25
 
 
 # markovised sequence analysis and plotting
-NUM_MARKOVISED_SEQUENCES = 10
+NUM_MARKOVISED_SEQUENCES = 30
 markovised_plot_color = "darkgreen"
 
 
@@ -79,7 +81,7 @@ minimum_bouts_for_fitting = 250
 insufficient_data_flag = 'insufficient_data'
 
 # Bootstrapping
-NUM_BOOTSTRAP_REPS = 10
+NUM_BOOTSTRAP_REPS = 100
 
 # Miscellaneous
 SUPPRESS_INFORMATIVE_PRINT = False
