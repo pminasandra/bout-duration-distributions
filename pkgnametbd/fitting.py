@@ -108,7 +108,6 @@ def fits_to_all_states(dataframe, *args, **kwargs):
         flag = ""
         if "flag" not in kwargs:
             flag = "[markov call]"
-        print(f"Generating fits for {state}")
         if len(durations) < config.minimum_bouts_for_fitting:
             warnings.warn(f"W: insufficient data for state {state} {flag}")
             fit = config.insufficient_data_flag
@@ -487,12 +486,16 @@ def test_for_powerlaws(add_bootstrapping=True, add_markov=True):
                                     color="darkred", alpha=0.09)
 
             if add_markov:
+                mfits = [f for f in mfits if f != config.insufficient_data_flag]
                 ccdfs = [f.ccdf() for f in mfits]
-                xrange, mean, ulim, llim = interp_ccdf(ccdfs)
-                ax.plot(xrange, mean, color=config.markovised_plot_color,
-                            linewidth=0.75, alpha=0.4)
-                ax.fill_between(xrangem ulim, llim, color=config.markovised_plot_color,
-                            alpha=0.09)
+                if len(ccdfs) > 0:
+                    xrange, mean, ulim, llim = interp_ccdf(ccdfs)
+                    ax.autoscale(enable=False)
+                    ax.plot(xrange, mean, color=config.markovised_plot_color,
+                                linewidth=0.75, alpha=0.4)
+                    ax.fill_between(xrange, ulim, llim, color=config.markovised_plot_color,
+                                alpha=0.09)
+                    ax.autoscale(enable=True)
 
 
 
