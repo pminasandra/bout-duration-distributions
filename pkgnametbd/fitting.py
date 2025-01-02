@@ -106,27 +106,20 @@ def fits_to_all_states(dataframe, *args, **kwargs):
     for state in statewise_bouts_data:
         durations = statewise_bouts_data[state]["duration"]
         flag = ""
-        if "flag" not in kwargs:
+        if "flag" in kwargs:
             flag = "[markov call]"
         if len(durations) < config.minimum_bouts_for_fitting:
             warnings.warn(f"W: insufficient data for state {state} {flag}")
             fit = config.insufficient_data_flag
         else:
             kwargs = {x:y for x,y in kwargs.items() if x != "flag"}
-            try:
-                fit = pl.Fit(durations, *args, discrete=config.discrete,
-                    xmin=config.xmin, **kwargs)
-                _ = fit.power_law
-                _ = fit.exponential
-                _ = fit.lognormal
-                _ = fit.truncated_power_law
-                _ = fit.stretched_exponential
-# Above bullshit is necessary because of issues with lazyloading
-# and multiprocessing. As ever, multiprocessing remains the bane of
-# logic, sense, and all things good on God's green earth.
-            except RecursionError as e:
-                print(e)
-                fit = config.insufficient_data_flag
+            fit = pl.Fit(durations, *args, discrete=config.discrete,
+                xmin=config.xmin, **kwargs)
+            _ = fit.power_law
+            _ = fit.exponential
+            _ = fit.lognormal
+            _ = fit.truncated_power_law
+            _ = fit.stretched_exponential
 
         fitted_distributions[state] = fit
 
@@ -396,6 +389,11 @@ def test_for_powerlaws(add_bootstrapping=True, add_markov=True):
         states = states_summary(data)["states"]
         if add_markov:
             fit_all_markovisations = [fits_to_all_states(d) for d in  msg]
+            for statevar2 in states:
+                for fits_temp in fit_all_markovisations:
+                    if statevar2 not in fits_temp:
+                        fits_temp[statevar2] = config.insufficient_data_flag
+
 
         if species_ not in tables:
             tables[species_] = {}
@@ -424,7 +422,7 @@ def test_for_powerlaws(add_bootstrapping=True, add_markov=True):
 
 # Determining best fits
             data_subset = data[data["state"] == state]
-            print("About to start fit checks")
+            print("About to start fit checks for state:", state)
             if add_markov:
                 mfits = [fits[state] for fits in fit_all_markovisations]
                 msubsets = [d["state"] == state for d in msg]
