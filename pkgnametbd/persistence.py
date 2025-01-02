@@ -22,6 +22,7 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import adjusted_mutual_info_score, r2_score
 import scipy.optimize
+from scipy.stats import linregress
 
 from pkgnametbd import boutparsing
 from pkgnametbd import config
@@ -177,6 +178,69 @@ def _validated_paired_indices(dt_col, tdiff, indices_start, indices_end, epoch):
     return mask
 
 
+def _get_random_rows(data, num):
+    total_rows = data.shape[0]
+    inds = np.random.choice(total_rows, size=num, replace=False)
+
+    return data.copy()[inds, :]
+
+def _linear_regression_with_error(xvals, yvals):
+    """
+    Calculate the y-intercept of a linear regression and its error.
+
+    Parameters:
+        xvals (array-like): The independent variable values.
+        yvals (array-like): The dependent variable values.
+
+    Returns:
+        tuple: y-intercept and its error (intercept, error)
+    """
+    # Perform linear regression
+    slope, intercept, _, _, stderr = linregress(xvals, yvals)
+
+    # Calculate mean of xvals and other needed components
+    x_mean = np.mean(xvals)
+    n = len(xvals)
+    x_deviation_squared = np.sum((xvals - x_mean)**2)
+
+    # Compute the error in the y-intercept
+    intercept_error = stderr * np.sqrt(1 / n + x_mean**2 / x_deviation_squared)
+
+    return intercept, intercept_error
+
+def bialek_corrected_mi(x, y):
+    """
+    For given x and y values, performs a Slonim-Bialek finite size effect correction,
+    and provides the appropriate mutual information value.
+    Args:
+        x (np.array like): a dataset.
+        y: similar to x.
+    Returns:
+        mi_val (float), mi_err (float)
+    """
+
+    x = np.array(x.copy())
+    y = np.array(y.copy())
+
+    data = np.hstack((x,y))
+
+    xvals, yvals = [], []
+    tot_size = len(x)
+    sizes = np.logspace(np.log10(tot_size/2), np.log10(0.9*tot_size), 10).astype(int)
+    sizes = np.unique(sizes)
+    for subsize in sizes:
+        for i in range(len(config.NUM_REPS_PER_SUB_SIZE)):
+            data_subset = _get_random_rows(data, subsize)
+            xs = data_subset[:,0]
+            ys = data_subset[:,1]
+
+            yvals.append(_mutual_information(xs, ys))
+            xvals.append(subsize)
+
+    extrap_mi, extrap_mi_err = _linear_regression_with_error(xvals, yvals)
+    return extrap_mi, extrap_mi_err
+
+
 def MI_t(array, dt_col, T, epoch):
     """
     For a given time-series, quantifies the predictability of the animal's state
@@ -201,9 +265,10 @@ def MI_t(array, dt_col, T, epoch):
     array_starts = array[t_starts]
     array_ends = array[t_ends]
 
-    if len(array_starts) <= 1000:
+    if len(array_starts) < 1000:
         return np.nan
-    return _mutual_information(array_starts, array_ends)
+    mi, error = bialek_corrected_mi(array_starts, array_ends)
+    return mi, error
 
 
 def mutual_information_decay(df, species, timelags):
