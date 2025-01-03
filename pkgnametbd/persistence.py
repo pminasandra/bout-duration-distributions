@@ -28,6 +28,7 @@ from pkgnametbd import boutparsing
 from pkgnametbd import config
 from pkgnametbd import classifier_info
 from pkgnametbd import fitting
+import replicates
 from pkgnametbd import utilities
 
 if not config.SUPPRESS_INFORMATIVE_PRINT:
@@ -371,7 +372,7 @@ def _save_best_dist_params(funcs, params, r2vals):
                     "power_exponent": best_params[1],
                     "exponential_decay": best_params[2]}
 
-def complete_MI_analysis():
+def complete_MI_analysis(add_markov=True):
     """
     Runs all analyses for MI decay.
     """
@@ -407,13 +408,52 @@ def complete_MI_analysis():
 
 # Make plots of actual MI decay
         ax.plot(timelags, mi_vals, color="black", linewidth=0.4)
-        print("Errors are:", mi_errs)
         ax.fill_between(timelags, mi_vals + 2.58*mi_errs,
                             mi_vals - 2.58*mi_errs,
                             color="black",
                             alpha=0.09)
         ax.set_xscale("log")
         ax.set_yscale("log")
+
+# Markovisation analyses
+        if add_markov:
+            mvals, merrs = [], []
+            markovisations = replicates.load_markovisations_parallel(species_,
+                                        id_)
+            tls_markov = _time_slots_for_sampling(1, 21, 20)
+            tls_markov = np.unique(tls_markov)
+            j = 1
+            for mark in markovisations:
+                print(f"solving Markovisation #{j}")
+                j += 1
+                mval, merr = mutual_information_decay(mark, species_, tls_markov)
+                mvals.append(mval)
+                merrs.append(merr)
+
+            mvals = np.array(mvals)
+            mean_mi_markov = np.nanmean(mvals, axis=0)
+            ulim_mi_markov = np.nanquantile(mvals, 0.975,
+                                    method='closest_observation',
+                                    axis=0)
+            llim_mi_markov = np.nanquantile(mvals, 0.025,
+                                    method='closest_observation',
+                                    axis=0)
+
+            valid_vals = mean_mi_markov >= 1e-5
+            tls_markov_plot = tls_markov[valid_vals]
+            ulim_mi_markov = ulim_mi_markov[valid_vals]
+            llim_mi_markov = llim_mi_markov[valid_vals]
+            mean_mi_markov = mean_mi_markov[valid_vals]
+
+            ax.autoscale(enable=False)
+            ax.plot(tls_markov_plot, mean_mi_markov,
+                        color=config.markovised_plot_color,
+                        alpha=0.4, linewidth=0.4)
+            ax.fill_between(tls_markov_plot, ulim_mi_markov, llim_mi_markov,
+                        color=config.markovised_plot_color,
+                        alpha=0.09)
+            ax.autoscale(enable=True)
+
 
 # Fit candidate functions
         (mexp, lambda_), _ = fit_function(timelags, mi_vals, exponential_fit)
