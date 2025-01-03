@@ -196,17 +196,18 @@ def _linear_regression_with_error(xvals, yvals):
         tuple: y-intercept and its error (intercept, error)
     """
     # Perform linear regression
-    slope, intercept, _, _, stderr = linregress(xvals, yvals)
-
-    # Calculate mean of xvals and other needed components
-    x_mean = np.mean(xvals)
-    n = len(xvals)
-    x_deviation_squared = np.sum((xvals - x_mean)**2)
-
-    # Compute the error in the y-intercept
-    intercept_error = stderr * np.sqrt(1 / n + x_mean**2 / x_deviation_squared)
+    result = linregress(xvals, yvals)
+    intercept = result.intercept
+    intercept_error = result.intercept_stderr
 
     return intercept, intercept_error
+
+def _bialek_mp_helper(subsize, data):
+    data_subset = _get_random_rows(data, subsize)
+    xs = data_subset[:,0]
+    ys = data_subset[:,1]
+
+    return subsize, _mutual_information(xs, ys)
 
 def bialek_corrected_mi(x, y):
     """
@@ -222,20 +223,26 @@ def bialek_corrected_mi(x, y):
     x = np.array(x.copy())
     y = np.array(y.copy())
 
-    data = np.hstack((x,y))
+    data = np.vstack((x,y))
+    data = data.T
 
-    xvals, yvals = [], []
     tot_size = len(x)
     sizes = np.logspace(np.log10(tot_size/2), np.log10(0.9*tot_size), 10).astype(int)
     sizes = np.unique(sizes)
-    for subsize in sizes:
-        for i in range(len(config.NUM_REPS_PER_SUB_SIZE)):
-            data_subset = _get_random_rows(data, subsize)
-            xs = data_subset[:,0]
-            ys = data_subset[:,1]
 
-            yvals.append(_mutual_information(xs, ys))
-            xvals.append(subsize)
+    mp_tgts = [(subsize, data)\
+                    for subsize in sizes\
+                    for i in range(config.NUM_REPS_PER_SUB_SIZE)\
+                ]
+
+    pool = mp.Pool()
+    linres = pool.starmap(_bialek_mp_helper, mp_tgts)
+    pool.close()
+    pool.join()
+    pool.terminate()
+
+    xvals = [x for x,y in linres]
+    yvals = [y for x,y in linres]
 
     extrap_mi, extrap_mi_err = _linear_regression_with_error(xvals, yvals)
     return extrap_mi, extrap_mi_err
@@ -266,7 +273,7 @@ def MI_t(array, dt_col, T, epoch):
     array_ends = array[t_ends]
 
     if len(array_starts) < 1000:
-        return np.nan
+        return np.nan, np.nan
     mi, error = bialek_corrected_mi(array_starts, array_ends)
     return mi, error
 
@@ -290,7 +297,10 @@ def mutual_information_decay(df, species, timelags):
     for tau in timelags:
         mi_vals.append(MI_t(sequence, dt_col, tau, epoch))
 
-    return mi_vals
+    mis = [mi_val for mi_val, mi_err in mi_vals]
+    mi_errs = [mi_err for mi_val, mi_err in mi_vals]
+
+    return np.array(mis), np.array(mi_errs)
 
 
 def _exp_func(x, m, lambda_):
@@ -393,10 +403,15 @@ def complete_MI_analysis():
         print(f"MI decay analysis working on {species_} {id_}.")
 
 # Compute time-lagged MI values
-        mi_vals = mutual_information_decay(data, species_, timelags)
+        mi_vals, mi_errs = mutual_information_decay(data, species_, timelags)
 
 # Make plots of actual MI decay
-        ax.plot(timelags, mi_vals, color="black", linewidth=0.7)
+        ax.plot(timelags, mi_vals, color="black", linewidth=0.4)
+        print("Errors are:", mi_errs)
+        ax.fill_between(timelags, mi_vals + 2.58*mi_errs,
+                            mi_vals - 2.58*mi_errs,
+                            color="black",
+                            alpha=0.09)
         ax.set_xscale("log")
         ax.set_yscale("log")
 
@@ -458,5 +473,5 @@ def complete_MI_analysis():
         
 if __name__ == "__main__":
     complete_MI_analysis()
-    results = compute_all_alpha_dfa()
-    save_dfa_data(results)
+    #results = compute_all_alpha_dfa()
+    #save_dfa_data(results)
