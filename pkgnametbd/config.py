@@ -17,7 +17,8 @@ FIGURES = os.path.join(PROJECTROOT, "Figures")
 
 
 # Species
-species = ['meerkat', 'coati', 'hyena']
+#species = ['meerkat', 'coati', 'hyena']
+species = ['meerkat', 'coati']
 
 for s in species:
     assert s in os.listdir(DATA)
@@ -61,7 +62,7 @@ fit_line_style = 'dotted'
 error_bars_rlim = 25
 
 # Mutual information analyses
-NUM_REPS_PER_SUB_SIZE = 10
+NUM_REPS_PER_SUB_SIZE = 5
 
 # markovised sequence analysis and plotting
 NUM_MARKOVISED_SEQUENCES = 30
