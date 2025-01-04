@@ -100,6 +100,7 @@ ax.set_ylabel("Proportion of results with lognormal best fits")
 ax.legend(title="True bout duration distribution")
 utilities.saveimg(fig, "simulation_classification_effect_lognormals")
 ## BLOCK 2: why strange stuff happens at error = 0.25
+plt.cla()
 simulations.generate_illustration_at_crucial_error()
 
 # BLOCK 3: Mixtures of exponentials

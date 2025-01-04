@@ -194,11 +194,19 @@ def simulate_with_distribution(distribution_name):
             yield sim_count, ft_params, bd_distributions, epoch, fit_results, lognormal_results
 
 
-    pool = mp.Pool(config.NUM_CORES)
-    pool.starmap(_simulate_and_get_results, _gen())
-    pool.close()
-    pool.join()
+    try:
+        pool = mp.Pool(config.NUM_CORES)
+        pool.starmap(_simulate_and_get_results, _gen())
+        pool.close()
+        pool.join()
 
+    except ZeroDivisionError as e:
+    # This is to address a ridiculous bug in powerlaw
+    # I tried to diagnose it, but couldn't. Just a random
+    # ZeroDivisionError that pops up in some places, once in
+    # a while
+        print("There was a zero division error:", e)
+        pass
     fit_results = np.array(fit_results)
     lognormal_results = np.array(lognormal_results)
     np.savetxt(os.path.join(config.DATA, f"simulation_{distribution_name}_heavy_tails.npout"), fit_results)
