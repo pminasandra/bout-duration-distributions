@@ -208,7 +208,8 @@ def _bialek_mp_helper(subsize, data):
     xs = data_subset[:,0]
     ys = data_subset[:,1]
 
-    return subsize, _mutual_information(xs, ys)
+    mi = _mutual_information(xs, ys)
+    return subsize, mi
 
 def bialek_corrected_mi(x, y):
     """
@@ -242,10 +243,10 @@ def bialek_corrected_mi(x, y):
     pool.join()
     pool.terminate()
 
-    xvals = [x for x,y in linres]
-    yvals = [y for x,y in linres]
+    xvals = np.array([x for x,y in linres])
+    yvals = np.array([y for x,y in linres])
 
-    extrap_mi, extrap_mi_err = _linear_regression_with_error(xvals, yvals)
+    extrap_mi, extrap_mi_err = _linear_regression_with_error(1/xvals, yvals)
     return extrap_mi, extrap_mi_err
 
 
@@ -276,6 +277,7 @@ def MI_t(array, dt_col, T, epoch):
     if len(array_starts) < 1000:
         return np.nan, np.nan
     mi, error = bialek_corrected_mi(array_starts, array_ends)
+    print("Computations finished for delay", T)
     return mi, error
 
 
@@ -407,6 +409,7 @@ def complete_MI_analysis(add_markov=True):
         mi_vals, mi_errs = mutual_information_decay(data, species_, timelags)
 
 # Make plots of actual MI decay
+        print(mi_errs)
         ax.plot(timelags, mi_vals, color="black", linewidth=0.4)
         ax.fill_between(timelags, mi_vals + 2.58*mi_errs,
                             mi_vals - 2.58*mi_errs,
@@ -420,10 +423,12 @@ def complete_MI_analysis(add_markov=True):
             mvals, merrs = [], []
             markovisations = replicates.load_markovisations_parallel(species_,
                                         id_)
-            tls_markov = _time_slots_for_sampling(1, 21, 20)
+            tls_markov = np.arange(1,21).astype(int)
             tls_markov = np.unique(tls_markov)
             j = 1
             for mark in markovisations:
+                # Cannot parallelise this bit because
+                # mutual_information_decay(...) already uses a mp.Pool()
                 print(f"solving Markovisation #{j}")
                 j += 1
                 mval, merr = mutual_information_decay(mark, species_, tls_markov)
@@ -486,11 +491,13 @@ def complete_MI_analysis(add_markov=True):
         # Commenting these out because all fit to trunc pow-law anyway
         #ax.plot(timelags, _exp_func(timelags, mexp, lambda_), color="blue", linestyle="dotted")
         #ax.plot(timelags, _pl_func(timelags, malpha, alpha), color="red", linestyle="dotted")
+        ax.autoscale(enable=False)
         ax.plot(timelags, _tpl_func(timelags, mtrunc, talpha, tlambda_),
                     color="maroon",
                     linestyle="dotted",
                     linewidth=0.5
                 )
+        ax.autoscale(enable=True)
 
     pd.DataFrame(r2_results).to_csv(os.path.join(config.DATA,
                                                     "MI_decay_R2s.csv"
