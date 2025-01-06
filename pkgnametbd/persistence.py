@@ -277,6 +277,7 @@ def MI_t(array, dt_col, T, epoch):
     if len(array_starts) < 1000:
         return np.nan, np.nan
     mi, error = bialek_corrected_mi(array_starts, array_ends)
+    mi = max(mi, 0.0)
     print("Computations finished for delay", T)
     return mi, error
 
@@ -392,10 +393,16 @@ def complete_MI_analysis(add_markov=True):
     plots = {}
     r2_results = []
     param_results = []
+
+    saved_res = ["species", "id", "mi_vals", "mi_errs" "mean_mi_markov",
+                    "ulim_mi_markov", "llim_mi_markov", "tls_markov"]
+    saved_res = pd.DataFrame(columns=saved_res)
+
     for databundle in bdg:
         species_ = databundle["species"]
         id_ = databundle["id"]
         data = databundle["data"]
+        table_row = {"species": species_, "id": id_}
 
 # Make empty plots
         if species_ not in plots:
@@ -407,9 +414,10 @@ def complete_MI_analysis(add_markov=True):
 
 # Compute time-lagged MI values
         mi_vals, mi_errs = mutual_information_decay(data, species_, timelags)
+        table_row["mi_vals"] = mi_vals
+        table_row["mi_errs"] = mi_errs
 
 # Make plots of actual MI decay
-        print(mi_errs)
         ax.plot(timelags, mi_vals, color="black", linewidth=0.4)
         ax.fill_between(timelags, mi_vals + 2.58*mi_errs,
                             mi_vals - 2.58*mi_errs,
@@ -444,11 +452,21 @@ def complete_MI_analysis(add_markov=True):
                                     method='closest_observation',
                                     axis=0)
 
-            valid_vals = mean_mi_markov >= 1e-5
+            valid_vals = llim_mi_markov >= 1e-5
             tls_markov_plot = tls_markov[valid_vals]
             ulim_mi_markov = ulim_mi_markov[valid_vals]
             llim_mi_markov = llim_mi_markov[valid_vals]
             mean_mi_markov = mean_mi_markov[valid_vals]
+
+            table_row["mean_mi_markov"] = mean_mi_markov
+            table_row["ulim_mi_markov"] = ulim_mi_markov
+            table_row["llim_mi_markov"] = llim_mi_markov
+            table_row["tls_markov"] = tls_markov_plot
+
+            if saved_res.empty:
+                saved_res = pd.DataFrame(table_row)
+            else:
+                saved_res = pd.concat(saved_res, pd.DataFrame(table_row))
 
             ax.autoscale(enable=False)
             ax.plot(tls_markov_plot, mean_mi_markov,
@@ -507,6 +525,7 @@ def complete_MI_analysis(add_markov=True):
                                                     "MI_decay_params.csv"
                                                     ),
                                                 index=False)
+    saved_res.to_pickle(os.path.join(config.DATA, "MI_analyses_raw.pkl"))
 
     for species_ in plots:
         fig, ax = plots[species_]
