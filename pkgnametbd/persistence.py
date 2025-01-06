@@ -414,8 +414,8 @@ def complete_MI_analysis(add_markov=True):
 
 # Compute time-lagged MI values
         mi_vals, mi_errs = mutual_information_decay(data, species_, timelags)
-        table_row["mi_vals"] = mi_vals
-        table_row["mi_errs"] = mi_errs
+        table_row["mi_vals"] = [mi_vals]
+        table_row["mi_errs"] = [mi_errs]
 
 # Make plots of actual MI decay
         ax.plot(timelags, mi_vals, color="black", linewidth=0.4)
@@ -458,15 +458,15 @@ def complete_MI_analysis(add_markov=True):
             llim_mi_markov = llim_mi_markov[valid_vals]
             mean_mi_markov = mean_mi_markov[valid_vals]
 
-            table_row["mean_mi_markov"] = mean_mi_markov
-            table_row["ulim_mi_markov"] = ulim_mi_markov
-            table_row["llim_mi_markov"] = llim_mi_markov
-            table_row["tls_markov"] = tls_markov_plot
+            table_row["mean_mi_markov"] = [mean_mi_markov]
+            table_row["ulim_mi_markov"] = [ulim_mi_markov]
+            table_row["llim_mi_markov"] = [llim_mi_markov]
+            table_row["tls_markov"] = [tls_markov_plot]
 
             if saved_res.empty:
                 saved_res = pd.DataFrame(table_row)
             else:
-                saved_res = pd.concat(saved_res, pd.DataFrame(table_row))
+                saved_res = pd.concat((saved_res, pd.DataFrame(table_row)))
 
             ax.autoscale(enable=False)
             ax.plot(tls_markov_plot, mean_mi_markov,
