@@ -12,6 +12,7 @@ Runs a suite of 4 simulations (BLOCKs below)
         they self-reinforce their bouts (i.e., have decreasing hazard functions?
 """
 
+import multiprocessing as mp
 import os
 import os.path
 import warnings
@@ -138,15 +139,27 @@ fig, ax = plt.subplots()
 datfull5, datfull25, datfull125 = [], [], []
 colors = ["blue", "green", "orange"]
 sizes = [5,25,125]
-for i in range(10):
-    print(f"Social simulation, iteration {i}")
-    dat5 = simulations.social.social_sync_simulation(5)
-    dat25 = simulations.social.social_sync_simulation(25)
-    dat125 = simulations.social.social_sync_simulation(125)
 
-    datfull5.extend(dat5)
-    datfull25.extend(dat25)
-    datfull125.extend(dat125)
+pool = mp.Pool()
+datfull5 = pool.map(simulations.social.social_sync_simulation, [5]*10)
+print("n=5 sims done")
+datfull25 = pool.map(simulations.social.social_sync_simulation, [25]*10)
+print("n=25 sims done")
+datfull125 = pool.map(simulations.social.social_sync_simulation, [125]*10)
+print("n=125 sims done")
+pool.close()
+pool.join()
+pool.terminate()
+
+def _unpack(lol):
+    uplol = []
+    for list_ in lol:
+        uplol.extend(list_)
+    return uplol
+
+datfull5 = _unpack(datfull5)
+datfull25 = _unpack(datfull25)
+datfull125 = _unpack(datfull125)
 
 i=0
 for dat in [datfull5, datfull25, datfull125]:
