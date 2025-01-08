@@ -192,8 +192,10 @@ def make_pie_charts():
             df = pd.read_csv(datafile, sep=',')
             tot_inds = df.shape[0]
 
-            tot_heavy = (df['Power_Law'] == 0).sum()\
-                        + (df['Truncated_Power_Law'] == 0).sum()
+            tot_heavy = (df['best_fit_bootstrap'].isin([
+                'Power_Law',
+                'Truncated_Power_Law'
+            ])).sum()
             fig, ax = plt.subplots()
 
             prop = tot_heavy/tot_inds

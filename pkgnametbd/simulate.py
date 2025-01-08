@@ -21,6 +21,7 @@ import numpy as np
 import pandas as pd
 
 import config
+import fitting
 import utilities
 
 import simulations
@@ -134,12 +135,32 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 # BLOCK 4: Social reinforcement
 #plt.cla()
 fig, ax = plt.subplots()
+datfull5, datfull25, datfull125 = [], [], []
+colors = ["blue", "green", "orange"]
+sizes = [5,25,125]
 for i in range(10):
     print(f"Social simulation, iteration {i}")
-    simulations.social.social_sync_simulation(5, fig, ax, linewidth=0.2, color="blue")
-    simulations.social.social_sync_simulation(10, fig, ax, linewidth=0.2, color="green")
-    simulations.social.social_sync_simulation(25, fig, ax, linewidth=0.2, color="orange")
+    dat5 = simulations.social.social_sync_simulation(5)
+    dat25 = simulations.social.social_sync_simulation(25)
+    dat125 = simulations.social.social_sync_simulation(125)
 
+    datfull5.extend(dat5)
+    datfull25.extend(dat25)
+    datfull125.extend(dat125)
+
+i=0
+for dat in [datfull5, datfull25, datfull125]:
+    list0 = [x[:,0] for x in dat]
+    list1 = [x[:,1] for x in dat]
+
+    dat_new = zip(list0, list1)
+    x, meany, ulimy, llimy = fitting.interp_ccdf(dat_new) #Borrowing the interp_ccdf
+                                            # function cause it does the same thing.
+    ax.plot(x, meany, linewidth=0.3, color=colors[i], label=str(sizes[i]))
+    ax.fill_between(x, ulimy, llimy, alpha=0.1, color=colors[i])
+    i += 1
+
+ax.legend(title="$n$")
 ax.set_xlabel("Time since start of bout")
 ax.set_ylabel("Hazard rate")
 utilities.saveimg(fig, "social_reinforcement_simulation")
