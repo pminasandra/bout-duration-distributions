@@ -337,4 +337,4 @@ if __name__ == "__main__":
     if config.COLLAGE_IMAGES:
         plt.rcParams.update({'font.size': 22})
 
-    generate_behavioural_inertia_plots(hazard_rate=True)
+    generate_behavioural_inertia_plots(hazard_rate=True, add_markov=False, add_bootstrapping=False)

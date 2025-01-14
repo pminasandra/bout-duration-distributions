@@ -538,6 +538,6 @@ def complete_MI_analysis(add_markov=True):
         utilities.saveimg(plots[species_][0], f"MI_decay_{species_}")
         
 if __name__ == "__main__":
-    complete_MI_analysis()
+    complete_MI_analysis(add_markov=False)
     #results = compute_all_alpha_dfa()
     #save_dfa_data(results)
