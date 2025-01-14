@@ -120,11 +120,13 @@ def default_datagen_creator(species):
 meerkat_data_generator = default_datagen_creator("meerkat")
 coati_data_generator = default_datagen_creator("coati")
 hyena_data_generator = default_datagen_creator("hyena")
+meerkat_vedba_data_generator = default_datagen_creator("meerkat_vedba")
 
 generators = {
                 "meerkat": meerkat_data_generator,
                 "coati": coati_data_generator,
-                "hyena": hyena_data_generator
+                "hyena": hyena_data_generator,
+                "meerkat_vedba": meerkat_vedba_data_generator
             }
 
 def bouts_data_generator(randomize=False, extract_bouts=True):
