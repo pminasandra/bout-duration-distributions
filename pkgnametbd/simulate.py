@@ -107,6 +107,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 # BLOCK 3: Mixtures of exponentials
 #simulations.check_mixed_exps()
+simulations.check_3exp_mixtures()
 
 # The above call generates a csv file, which we will now read
 #df = pd.read_csv(os.path.join(config.DATA, "mixed_exp_res.csv"))
@@ -135,45 +136,45 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 
 # BLOCK 4: Social reinforcement
 #plt.cla()
-fig, ax = plt.subplots()
-datfull5, datfull25, datfull125 = [], [], []
-colors = ["blue", "green", "orange"]
-sizes = [5,25,125]
-
-pool = mp.Pool()
-datfull5 = pool.map(simulations.social.social_sync_simulation, [5]*10)
-print("n=5 sims done")
-datfull25 = pool.map(simulations.social.social_sync_simulation, [25]*10)
-print("n=25 sims done")
-datfull125 = pool.map(simulations.social.social_sync_simulation, [125]*10)
-print("n=125 sims done")
-pool.close()
-pool.join()
-pool.terminate()
-
-def _unpack(lol):
-    uplol = []
-    for list_ in lol:
-        uplol.extend(list_)
-    return uplol
-
-datfull5 = _unpack(datfull5)
-datfull25 = _unpack(datfull25)
-datfull125 = _unpack(datfull125)
-
-i=0
-for dat in [datfull5, datfull25, datfull125]:
-    list0 = [x[:,0] for x in dat]
-    list1 = [x[:,1] for x in dat]
-
-    dat_new = zip(list0, list1)
-    x, meany, ulimy, llimy = fitting.interp_ccdf(dat_new) #Borrowing the interp_ccdf
-                                            # function cause it does the same thing.
-    ax.plot(x, meany, linewidth=0.3, color=colors[i], label=str(sizes[i]))
-    ax.fill_between(x, ulimy, llimy, alpha=0.1, color=colors[i])
-    i += 1
-
-ax.legend(title="$n$")
-ax.set_xlabel("Time since start of bout")
-ax.set_ylabel("Hazard rate")
-utilities.saveimg(fig, "social_reinforcement_simulation")
+#fig, ax = plt.subplots()
+#datfull5, datfull25, datfull125 = [], [], []
+#colors = ["blue", "green", "orange"]
+#sizes = [5,25,125]
+#
+#pool = mp.Pool()
+#datfull5 = pool.map(simulations.social.social_sync_simulation, [5]*10)
+#print("n=5 sims done")
+#datfull25 = pool.map(simulations.social.social_sync_simulation, [25]*10)
+#print("n=25 sims done")
+#datfull125 = pool.map(simulations.social.social_sync_simulation, [125]*10)
+#print("n=125 sims done")
+#pool.close()
+#pool.join()
+#pool.terminate()
+#
+#def _unpack(lol):
+#    uplol = []
+#    for list_ in lol:
+#        uplol.extend(list_)
+#    return uplol
+#
+#datfull5 = _unpack(datfull5)
+#datfull25 = _unpack(datfull25)
+#datfull125 = _unpack(datfull125)
+#
+#i=0
+#for dat in [datfull5, datfull25, datfull125]:
+#    list0 = [x[:,0] for x in dat]
+#    list1 = [x[:,1] for x in dat]
+#
+#    dat_new = zip(list0, list1)
+#    x, meany, ulimy, llimy = fitting.interp_ccdf(dat_new) #Borrowing the interp_ccdf
+#                                            # function cause it does the same thing.
+#    ax.plot(x, meany, linewidth=0.3, color=colors[i], label=str(sizes[i]))
+#    ax.fill_between(x, ulimy, llimy, alpha=0.1, color=colors[i])
+#    i += 1
+#
+#ax.legend(title="$n$")
+#ax.set_xlabel("Time since start of bout")
+#ax.set_ylabel("Hazard rate")
+#utilities.saveimg(fig, "social_reinforcement_simulation")

@@ -216,7 +216,7 @@ def simulate_with_distribution(distribution_name):
 def _multiprocessing_helper_func(p, expl0, expl1, count, tgtlist, num_sims):
     np.random.seed()
     print(f"Working on p={p}, l1={expl0}, l2={expl1}")
-    dist = mixed_exponentials.MixedExponential(p, expl0, expl1)
+    dist = mixed_exponentials.MixedExponential((p, 1-p), (expl0, expl1))
     vals = dist.generate_random(sconfig.NUM_BOUTS)
 
     bouts_df = pd.DataFrame({"state":["A"]*sconfig.NUM_BOUTS, "duration":vals})
@@ -268,3 +268,38 @@ def check_mixed_exps():
     df.to_csv(os.path.join(config.DATA, "mixed_exp_res.csv"),
                 index=False
              )
+
+def check_3exp_mixtures():
+    """
+    Simulates mixtures of 3 exponentials, and looks for number of heavy tails
+    """
+
+    import pickle
+
+    ps = np.random.dirichlet((1,1,1), size=1_000_000)
+    lambdas = np.random.uniform(size=3_000_000)
+    lambdas = lambdas.reshape(1_000_000, 3)
+    fits = []
+
+    for j in range(1_000_000):
+        print("check_3exp_mixtures:", j, end="\033[K\r")
+        if j%500 == 0:
+            with open(os.path.join(config.DATA, "3expmix.pkl"), "wb") as pklf:
+                pickle.dump(fits, pklf)
+        p = ps[j, :]
+        lam = lambdas[j, :]
+
+        dist = mixed_exponentials.MixedExponential(p, lam)
+        vals = dist.generate_random(sconfig.NUM_BOUTS)
+
+        bouts_df = pd.DataFrame({"state":["A"]*sconfig.NUM_BOUTS, "duration":vals})
+
+        pred_fits = fitting.fits_to_all_states(bouts_df)
+
+        for state in ["A"]:
+            fit = pred_fits[state]
+            bouts = bouts_df[bouts_df["state"] == state]
+            bouts = bouts["duration"]
+            dist_name, dist = fitting.choose_best_distribution(fit, bouts)
+            fits.append(dist_name)
+    print()
