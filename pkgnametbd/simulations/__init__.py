@@ -237,7 +237,7 @@ def check_mixed_exps():
     and checks the best-fit for the resulting data
     """
     import pandas as pd
-    ps = np.arange(0.0, 1.0, 0.01)
+    ps = np.arange(0.0, 1.01, 0.01)
     per_param_pair = 100
     exp1 = 0.01
     expl2 = 10.0**(np.arange(-6, 1, 1))

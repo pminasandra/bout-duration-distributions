@@ -106,8 +106,8 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 #simulations.generate_illustration_at_crucial_error()
 
 # BLOCK 3: Mixtures of exponentials
-#simulations.check_mixed_exps()
-simulations.check_3exp_mixtures()
+simulations.check_mixed_exps()
+#simulations.check_3exp_mixtures()
 
 # The above call generates a csv file, which we will now read
 #df = pd.read_csv(os.path.join(config.DATA, "mixed_exp_res.csv"))
