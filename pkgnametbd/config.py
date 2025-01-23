@@ -17,8 +17,7 @@ FIGURES = os.path.join(PROJECTROOT, "Figures")
 
 
 # Species
-#species = ['meerkat', 'coati', 'hyena']
-species = ['meerkat', 'coati']
+species = ['meerkat', 'coati', 'hyena']
 
 for s in species:
     assert s in os.listdir(DATA)

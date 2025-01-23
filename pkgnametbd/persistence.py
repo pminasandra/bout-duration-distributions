@@ -536,8 +536,81 @@ def complete_MI_analysis(add_markov=True):
 
         ax.set_ylabel("Time-lagged mutual information")
         utilities.saveimg(plots[species_][0], f"MI_decay_{species_}")
+
+def replot(pklfile):
+    """
+    hacky function to replot with right axis limits to make plots pretty for paper.
+    use above code for most informative plots for inference however.
+    no need to review.
+    """
+
+    import pickle
+    df_params = pd.read_csv("/home/pranav/Personal/Projects/Bout_Duration_Distributions/Data/MI_decay_params_ALL.csv")
+    with open(pklfile, "rb") as pklf:
+        df = pickle.load(pklf)
+
+    timelags = _time_slots_for_sampling(1, 5000, 50)
+    timelags = np.unique(timelags)
+    df = df[df.species.isin(config.species)]
+    for species_ in df.species.unique():
+        store = []
+        fig, ax = plt.subplots()
+        df_s = df[df.species == species_]
         
+        for id_ in df_s.id.unique():
+            rel_params = df_params[df_params.species == species_]
+            rel_params = rel_params[rel_params.id == id_]
+            df_i = df_s[df_s.id == id_]
+
+            mi_vals = df_i["mi_vals"].item()
+            store.append(mi_vals)
+            mi_errs = df_i["mi_errs"].item()
+
+            ax.plot(timelags, mi_vals, color="black", linewidth=0.4)
+            ax.fill_between(timelags, mi_vals + 2.58*mi_errs,
+                                mi_vals - 2.58*mi_errs,
+                                color="black",
+                                alpha=0.09)
+
+
+            mean_mi_markov = df_i["mean_mi_markov"].item()
+            ulim_mi_markov = df_i["ulim_mi_markov"].item()
+            llim_mi_markov = df_i["llim_mi_markov"].item()
+            tls_markov_plot = df_i["tls_markov"].item()
+
+            ax.plot(tls_markov_plot, mean_mi_markov,
+                        color=config.markovised_plot_color,
+                        alpha=0.4, linewidth=0.4)
+            ax.fill_between(tls_markov_plot, ulim_mi_markov, llim_mi_markov,
+                        color=config.markovised_plot_color,
+                        alpha=0.09)
+
+            mtrunc = rel_params["coefficient"].item()
+            talpha = rel_params["power_exponent"].item()
+            tlambda_ = rel_params["exponential_decay"].item()
+            ax.plot(timelags, _tpl_func(timelags, mtrunc, talpha, tlambda_),
+                        color="maroon",
+                        linestyle="dotted",
+                        linewidth=0.5
+                    )
+
+
+        ax.set_xscale("log")
+        ax.set_yscale("log")
+
+        store = np.array(store)
+        store[store==0.0] = np.nan
+        yl = np.nanmin(store)*0.85
+        yu = np.nanmax(store)*1.15
+        print(yl, yu)
+
+        ax.set_ylim(yl, yu)
+        utilities.saveimg(fig, f"MI_decay_{species_}_replot")
+
+
+
 if __name__ == "__main__":
-    complete_MI_analysis()
+    #complete_MI_analysis()
+    replot("/home/pranav/Personal/Projects/Bout_Duration_Distributions/Data/MI_analyses_all_raw.pkl")
     #results = compute_all_alpha_dfa()
     #save_dfa_data(results)
