@@ -25,9 +25,9 @@ class MixedExponential:
             lambdas (array-like): parameters for each distribution
         """
 
-        assert np.isclose(ps.sum(), 1.0)
+        assert np.isclose(sum(ps), 1.0)
 
-        self.weights = ps
+        self.weights = np.array(ps)
         self.dists = np.array([pl.Exponential(xmin=xmin, parameters=[l],
                         discrete=discrete) for l in lambdas])
 
