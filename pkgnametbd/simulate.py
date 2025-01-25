@@ -18,6 +18,7 @@ import os.path
 import warnings
 
 import matplotlib.pyplot as plt
+import matplotlib.colors
 import numpy as np
 import pandas as pd
 
@@ -106,7 +107,42 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 #simulations.generate_illustration_at_crucial_error()
 
 # BLOCK 3: Mixtures of exponentials
-simulations.check_mixed_exps()
+#simulations.check_mixed_exps()
+#
+fig, ax = plt.subplots()
+
+dist_map = {"Exponential": 0, "Lognormal": 1, "Truncated_Power_Law": 2}
+df = pd.read_csv(os.path.join(config.DATA, "mixed_exp_res.csv"))
+df["l1l2"] = df["exp1"]/df["exp2"]
+df["dist_numeric"] = df["dist_name"].map(dist_map)
+
+cols = {"Exponential": 'blue',
+        "Lognormal":   'orange',
+        "Truncated_Power_Law": 'green'}
+
+heatmap_data = df.groupby(["p", "l1l2"])["dist_numeric"]\
+                    .agg(lambda x: x.mode()[0]).unstack()
+
+print(heatmap_data.T)
+custom_colors = ["#4C72B0", "#DD8452", "#55C848"]
+custom_cmap = matplotlib.colors.ListedColormap(custom_colors)
+cmap = plt.cm.get_cmap("viridis", len(dist_map))  # Create a colormap with 3 colors
+c = ax.imshow(heatmap_data, aspect="auto", origin="lower", cmap=custom_cmap, alpha=0.75)
+
+# Add colorbar
+cbar = fig.colorbar(c, ax=ax, ticks=range(len(dist_map)))
+cbar.ax.set_yticklabels(dist_map.keys())
+
+ax.set_ylabel(r"$p$")
+ax.set_xlabel(r"$\frac{\lambda_1}{\lambda_2}$")
+#ax.set_xscale("log")
+
+ax.set_xticks(np.arange(heatmap_data.columns.size))
+ax.set_yticks(np.arange(0, heatmap_data.index.size, 10))
+ax.set_xticklabels(heatmap_data.columns.round(2))
+ax.set_yticklabels(heatmap_data.index.round(2)[::10])
+
+utilities.saveimg(fig, "mixed_exp_res")
 #simulations.check_3exp_mixtures()
 
 # The above call generates a csv file, which we will now read
