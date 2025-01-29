@@ -484,6 +484,8 @@ def test_for_powerlaws(add_bootstrapping=True, add_markov=True):
                     xs, upper_lim, lower_lim = make_bootstrap_95_CIs(fits[state], bootstrap_data)
                     ax.fill_between(xs, upper_lim, lower_lim,
                                     color="darkred", alpha=0.09, zorder=2)
+# zorder is declared to ensure that real-data fits are always on layered on
+# top of the Markovisations. Aesthetically more pleasing.
 
             if add_markov:
                 mfits = [f for f in mfits if f != config.insufficient_data_flag]
@@ -529,4 +531,6 @@ if __name__ == "__main__":
     if config.COLLAGE_IMAGES:
         plt.rcParams.update({'font.size': 22})
 
-    test_for_powerlaws(add_markov=True)
+    test_for_powerlaws(add_markov=True,
+        add_markov=config.ADD_MARKOV,
+        add_bootstrapping=config.ADD_BOOTSTRAPPING)

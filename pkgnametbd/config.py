@@ -64,6 +64,7 @@ error_bars_rlim = 25
 NUM_REPS_PER_SUB_SIZE = 5
 
 # markovised sequence analysis and plotting
+ADD_MARKOV=True
 NUM_MARKOVISED_SEQUENCES = 30
 markovised_plot_color = "darkgreen"
 
@@ -82,6 +83,7 @@ minimum_bouts_for_fitting = 250
 insufficient_data_flag = 'insufficient_data'
 
 # Bootstrapping
+ADD_BOOTSTRAPPING=True
 NUM_BOOTSTRAP_REPS = 100
 
 # Miscellaneous

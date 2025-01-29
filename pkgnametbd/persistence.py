@@ -610,7 +610,7 @@ def replot(pklfile):
 
 
 if __name__ == "__main__":
-    #complete_MI_analysis()
-    replot("/home/pranav/Personal/Projects/Bout_Duration_Distributions/Data/MI_analyses_all_raw.pkl")
-    #results = compute_all_alpha_dfa()
-    #save_dfa_data(results)
+    complete_MI_analysis(add_markov=config.ADD_MARKOV)
+    #replot("/home/pranav/Personal/Projects/Bout_Duration_Distributions/Data/MI_analyses_all_raw.pkl")
+    results = compute_all_alpha_dfa()
+    save_dfa_data(results)

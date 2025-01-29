@@ -124,6 +124,10 @@ def markovised_sequence_generator(beh_seq, species, num_replicates, length=None,
         yield markovised_sequence(beh_seq, species, length=length, start=start)
 
 def load_markovisations(species_, id_):
+    """
+    Load all markovisations for the organism specified by
+    species_ and id_ (both str)
+    """
     i = 0
     tgtdir = os.path.join(config.DATA, "Markovisations", species_, id_)
 
@@ -140,6 +144,12 @@ def _dummyfunc(x):
     return x
 
 def load_markovisations_parallel(species_, id_):
+    """
+    Parallely load up all markoivsations, because file-reading
+    at these sizes takes forever. 
+    Args:
+        species_ and id_ (both str)
+    """
     pool = mp.Pool()
     gen = load_markovisations(species_, id_)
     mdatasets = pool.map(_dummyfunc, gen)
@@ -150,11 +160,15 @@ def load_markovisations_parallel(species_, id_):
 
 if __name__ == "__main__":
     print("Generating Markovised Sequences.")
+
+# Make sure all necessary directories are set up
     markovdir = os.path.join(config.DATA, "Markovisations")
     os.makedirs(markovdir, exist_ok=True)
+
     for species_ in config.species:
         os.makedirs(os.path.join(markovdir, species_), exist_ok=True)
 
+# Create and save Markovisations
     bdg = boutparsing.bouts_data_generator(extract_bouts=False)
     for databundle in bdg:
         species_ = databundle["species"]
