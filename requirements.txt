@@ -1,7 +1,7 @@
 matplotlib
 nolds
 numpy
-pandas
+pandas>2
 powerlaw
 scikit_learn
 scipy
