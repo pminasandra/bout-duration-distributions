@@ -65,7 +65,7 @@ NUM_REPS_PER_SUB_SIZE = 5
 
 # markovised sequence analysis and plotting
 ADD_MARKOV=True
-NUM_MARKOVISED_SEQUENCES = 30
+NUM_MARKOVISED_SEQUENCES = 3
 markovised_plot_color = "darkgreen"
 
 
@@ -84,7 +84,7 @@ insufficient_data_flag = 'insufficient_data'
 
 # Bootstrapping
 ADD_BOOTSTRAPPING=True
-NUM_BOOTSTRAP_REPS = 100
+NUM_BOOTSTRAP_REPS = 10
 
 # Miscellaneous
 SUPPRESS_INFORMATIVE_PRINT = False

@@ -169,29 +169,29 @@ def _get_95_percent_cis(bootstrap_haz_table):
 
     return np.array(uppers), np.array(lowers)
 
-def _markovised_seq_parallel_helper(markovised_sequence, count_markov,
-                            species_, state, hazard_rate, add_bootstrapping):
-
-    print(f"Working on Markovisation #{count_markov + 1}")
-    survival_table_m = compute_behavioural_inertia(
-                            markovised_sequence,
-                            species_,
-                            state,
-                            hazard_rate=hazard_rate
-                        )
-    if _is_invalid(survival_table_m):
-        return "invalid"
-    if add_bootstrapping:
-        bootstrap_table_m = bootstrap_and_analyse(
-                                markovised_sequence,
-                                species_,
-                                state,
-                                hazard_rate=hazard_rate
-                            )
-        upper_lim, lower_lim = _get_95_percent_cis(bootstrap_table_m)
-        return survival_table_m, upper_lim, lower_lim
-
-    return survival_table_m
+#def _markovised_seq_parallel_helper(markovised_sequence, count_markov,
+#                            species_, state, hazard_rate, add_bootstrapping):
+#
+#    print(f"Working on Markovisation #{count_markov + 1}")
+#    survival_table_m = compute_behavioural_inertia(
+#                            markovised_sequence,
+#                            species_,
+#                            state,
+#                            hazard_rate=hazard_rate
+#                        )
+#    if _is_invalid(survival_table_m):
+#        return "invalid"
+#    if add_bootstrapping:
+#        bootstrap_table_m = bootstrap_and_analyse(
+#                                markovised_sequence,
+#                                species_,
+#                                state,
+#                                hazard_rate=hazard_rate
+#                            )
+#        upper_lim, lower_lim = _get_95_percent_cis(bootstrap_table_m)
+#        return survival_table_m, upper_lim, lower_lim
+#
+#    return survival_table_m
 
 def generate_behavioural_inertia_plots(hazard_rate=False, add_bootstrapping=True,
                                         add_markov=True):
@@ -274,9 +274,9 @@ with {config.NUM_MARKOVISED_SEQUENCES} Markovised seqeunces.")
                 tgts = zip(msg, count_markov)
                 tgts = ((ms, count, species_, state,
                             hazard_rate, add_bootstrapping) for ms, count in tgts)
-                
+                import tempdefs
                 pool = mp.Pool()
-                results_p = pool.starmap(_markovised_seq_parallel_helper, tgts)
+                results_p = pool.starmap(tempdefs._markovised_seq_parallel_helper, tgts)
                 pool.close()
                 pool.join()
 
