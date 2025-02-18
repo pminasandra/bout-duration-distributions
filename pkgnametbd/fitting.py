@@ -531,6 +531,5 @@ if __name__ == "__main__":
     if config.COLLAGE_IMAGES:
         plt.rcParams.update({'font.size': 22})
 
-    test_for_powerlaws(add_markov=True,
-        add_markov=config.ADD_MARKOV,
+    test_for_powerlaws(add_markov=config.ADD_MARKOV,
         add_bootstrapping=config.ADD_BOOTSTRAPPING)
