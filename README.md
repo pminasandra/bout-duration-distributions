@@ -7,8 +7,8 @@ author: Pranav Minasandra
 ![a montage of animal behaviours](./assets/montage.png)
 
 # Details
-The analyses in this code forms the basis of our
-[pre-print](https://www.biorxiv.org/content/10.1101/2024.01.20.576411v3),
+The analyses in this code forms the basis of our upcoming paper in PNAS
+[(pre-print)](https://www.biorxiv.org/content/10.1101/2024.01.20.576411v3):
 'Behavioral sequences across multiple animal species in the wild share common structural features'. 
 
 ## People who worked actively on this code
@@ -154,9 +154,10 @@ Run all indicated python scripts using a terminal, with the command
 
 Analyses are to be done as follows:
 
-- Running `python3 replicates.py` generates Markovised pseudosequences to be
+- Running `python3 code/pkgnametbd/replicates.py` generates Markovised pseudosequences to be
   used in the remaining analyses. This step will use a lot of storage space.
-  Ensure that you have enough free space on your hard-disk.
+  Ensure that you have enough free space on your hard-disk. **This step MUST be
+  run first.**
 - Running `python3 code/pkgnametbd/fitting.py` generates all bout duration
     distributions and generates tables containing AIC values. 
 - Running `python3 code/pkgnametbd/survival.py` creates plots with the hazard functions for all behaviours. 
