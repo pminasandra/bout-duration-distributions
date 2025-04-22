@@ -17,7 +17,8 @@ FIGURES = os.path.join(PROJECTROOT, "Figures")
 
 
 # Species
-species = ['meerkat', 'coati', 'hyena']
+#species = ['meerkat', 'coati', 'hyena']
+species = ["hyrax"]
 
 for s in species:
     assert s in os.listdir(DATA)
@@ -64,7 +65,7 @@ error_bars_rlim = 25
 NUM_REPS_PER_SUB_SIZE = 5
 
 # markovised sequence analysis and plotting
-ADD_MARKOV=True
+ADD_MARKOV=False
 NUM_MARKOVISED_SEQUENCES = 30
 markovised_plot_color = "darkgreen"
 
