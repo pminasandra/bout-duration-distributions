@@ -3,13 +3,13 @@ author:Pranav Minasandra
 ---
 
 # To-Do list
-- [ ] Markovised sequences in `survival.py`.
-- [ ] Bootstrap sequences in `fitting.py`.
-- [ ] Markovised sequences in `fitting.py`.
-- [ ] Should we compare Markovised sequences statistically, or will
+- [x] Markovised sequences in `survival.py`.
+- [x] Bootstrap sequences in `fitting.py`.
+- [x] Markovised sequences in `fitting.py`.
+- [x] Should we compare Markovised sequences statistically, or will
         visualisation be sufficient?
-- [ ] Nemenman-Bialek Finite Size Correction in `persistence.py`
-- [ ] Markovised sequences in `persistence.py`
+- [x] Nemenman-Bialek Finite Size Correction in `persistence.py`
+- [x] Markovised sequences in `persistence.py`
 
 ## Done
 
