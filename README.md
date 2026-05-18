@@ -7,9 +7,11 @@ author: Pranav Minasandra
 ![a montage of animal behaviours](./assets/montage.png)
 
 # Details
-The analyses in this code forms the basis of our upcoming paper in PNAS
-[(pre-print)](https://www.biorxiv.org/content/10.1101/2024.01.20.576411v3):
-'Behavioral sequences across multiple animal species in the wild share common structural features'. 
+The analyses in this code forms the basis of our paper in PNAS
+Minasandra, P., Grout, E. M., Brock, K., Crofoot, M. C., Demartsev, V., Gersick,
+A. S., ... & Strandburg-Peshkin, A. (2025). **Behavioral sequences across multiple
+animal species in the wild share common structural features.** _Proceedings of the
+National Academy of Sciences_, 122(20), e2503962122. DOI:[10.1073/pnas.2503962122](https://doi.org/10.1073/pnas.2503962122)
 
 ## People who worked actively on this code
 [Pranav Minasandra](https://pminasandra.github.io)
